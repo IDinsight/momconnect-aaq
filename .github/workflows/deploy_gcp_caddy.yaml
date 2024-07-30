@@ -3,8 +3,6 @@ name: Deploy Caddy to GCP
 on:
   push:
     branches:
-      - main
-      - testing
       - production
     paths:
       - "deployment/docker-compose/caddy/**"
