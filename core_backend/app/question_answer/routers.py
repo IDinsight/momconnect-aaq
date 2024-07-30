@@ -164,9 +164,6 @@ async def search_with_llm_response(
     return response
 
 
-@identify_language__before
-@translate_question__before
-@paraphrase_question__before
 async def search_without_llm_response(
     question: QueryRefined,
     response: QueryResponse | QueryResponseError,
