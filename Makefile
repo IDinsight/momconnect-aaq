@@ -46,7 +46,7 @@ setup-db:
 	@sleep 2
 	@docker run --name postgres-local \
      -e POSTGRES_PASSWORD=postgres \
-     -p 5432:5432 \
+     -p 5436:5432 \
      -d pgvector/pgvector:pg16
 	cd core_backend && \
 	python -m alembic upgrade head
@@ -95,6 +95,32 @@ setup-embeddings:
 		-p 8080:8080 \
 		-d embeddings
 
-teardown-embeddings:
-	@docker stop embeddings
-	@docker rm embeddings
+setup-huggingface-embeddings:
+	-@docker stop huggingface-embeddings
+	-@docker rm huggingface-embeddings
+	@docker system prune -f
+	@sleep 2
+	@docker run \
+		--name huggingface-embeddings \
+        -p 8080:80 \
+        -v $(PWD)/data:/data \
+        -d text-embeddings-inference \
+        --model-id $(HUGGINGFACE_MODEL) \
+        --api-key $(HUGGINGFACE_API_KEY)
+
+setup-huggingface-embeddings:
+	-@docker stop huggingface-embeddings
+	-@docker rm huggingface-embeddings
+	@docker system prune -f
+	@sleep 2
+	@docker run\ 
+		--name huggingface-embeddings\
+		-p 8080:80\
+		-v $(PWD)/data:/data \
+		--pull always \
+		text-embeddings-inference \ 
+		--model-id $(HUGGINGFACE_MODEL) \ 
+		--api-key $(HUGGINGFACE_API_KEY)
+setup-huggingface-embeddings:
+	@docker stop huggingface-embeddings
+	@docker rm  huggingface-embeddings

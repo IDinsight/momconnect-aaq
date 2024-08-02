@@ -14,6 +14,7 @@ import litellm
 from litellm import aembedding
 
 from .config import (
+    HUGGINGFACE_API_KEY,
     LANGFUSE,
     LITELLM_API_KEY,
     LITELLM_ENDPOINT,
@@ -140,7 +141,7 @@ async def embedding(text_to_embed: str, metadata: Optional[dict] = None) -> List
         model=LITELLM_MODEL_EMBEDDING,
         input=text_to_embed,
         api_base=LITELLM_ENDPOINT,
-        api_key=LITELLM_API_KEY,
+        api_key=HUGGINGFACE_API_KEY,
         metadata=metadata,
     )
 
