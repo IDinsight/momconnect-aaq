@@ -3,8 +3,6 @@ name: Deploy core_backend to GCP
 on:
   push:
     branches:
-      - main
-      - testing
       - production
     paths:
       - "core_backend/**"
