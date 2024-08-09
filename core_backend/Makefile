@@ -14,8 +14,8 @@ run-tests:
 	python -m pytest -rPQ -m "not rails and not alembic" --cov-report term-missing --cov-config=../pyproject.toml --cov-append --cov=. tests
 
 ## Helper targets
-setup-test-containers: setup-test-db
-teardown-test-containers: teardown-test-db
+setup-test-containers: setup-test-db setup-redis-test
+teardown-test-containers: teardown-test-db teardown-redis-test
 
 setup-test-db:
 	-@docker stop testdb
@@ -32,11 +32,26 @@ setup-test-db:
 	@set -a && source ./tests/api/test.env && set +a && \
 	python -m alembic upgrade head
 
+# Use port 6381 since port 6379 is used for dev and 6380 for docker-compose
+setup-redis-test:
+	-@docker stop redis-test
+	-@docker rm redis-test
+	@docker system prune -f
+	@sleep 2
+	@docker run --name redis-test \
+	-p 6381:6379 \
+     -d redis:6.0-alpine
+
+teardown-redis-test:
+	@docker stop redis-test
+	@docker rm redis-test
+
 teardown-test-db:
 	@docker stop testdb
 	@docker rm testdb
 
 # alignscore containers (if it is needed)
+# Use port 5002 since port 5001 is used for dev
 setup-alignscore-container:
 	-@docker stop testalignscore
 	-@docker rm testalignscore

@@ -1,5 +1,7 @@
+import { env } from "next-runtime-env";
+
 const NEXT_PUBLIC_BACKEND_URL: string =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+  env("NEXT_PUBLIC_BACKEND_URL") || "http://localhost:8000";
 
 interface ContentBody {
   content_title: string;
@@ -9,7 +11,7 @@ interface ContentBody {
 
 const getUser = async (token: string) => {
   try {
-    const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/user`, {
+    const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/user/`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -84,7 +86,7 @@ const archiveContent = async (content_id: number, token: string) => {
       let resp = response.json();
       return resp;
     } else {
-      throw new Error("Error archiving content");
+      throw new Error("Error deleting content");
     }
   });
 };

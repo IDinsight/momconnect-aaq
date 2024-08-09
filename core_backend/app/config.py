@@ -53,6 +53,7 @@ SERVICE_IDENTITY = os.environ.get(
 )
 CHECK_CONTENT_LIMIT = os.environ.get("CHECK_CONTENT_LIMIT", True)
 DEFAULT_CONTENT_QUOTA = int(os.environ.get("DEFAULT_CONTENT_QUOTA", 50))
+DEFAULT_API_QUOTA = int(os.environ.get("DEFAULT_API_QUOTA", 100))
 
 # Alignment Score variables
 ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
@@ -63,16 +64,11 @@ ALIGN_SCORE_API = os.environ.get("ALIGN_SCORE_API", "")
 
 # Backend paths
 BACKEND_ROOT_PATH = os.environ.get("BACKEND_ROOT_PATH", "")
-
-# Embeddings variables
-HUGGINGFACE_MODEL = os.environ.get("HUGGINGFACE_MODEL", "thenlper/gte-large")
-EMBEDDINGS_API_KEY = os.environ.get("EMBEDDINGS_API_KEY", "add-token")
-EMBEDDINGS_ENDPOINT = os.environ.get(
-    "EMBEDDINGS_ENDPOINT", "http://host.docker.internal:8080"
-)
-
 # Logging
 LANGFUSE = os.environ.get("LANGFUSE", "False")
 
 # Database
 DB_POOL_SIZE = os.environ.get("DB_POOL_SIZE", 20)  # Number of connections in the pool
+
+# Redis
+REDIS_HOST = os.environ.get("REDIS_HOST", "redis://localhost:6379")

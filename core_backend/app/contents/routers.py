@@ -3,6 +3,7 @@
 from typing import Annotated, List, Optional
 
 import pandas as pd
+import sqlalchemy.exc
 from fastapi import APIRouter, Depends, UploadFile, status
 from fastapi.exceptions import HTTPException
 from pandas.errors import EmptyDataError, ParserError
@@ -98,6 +99,7 @@ async def create_content(
     content_db = await save_content_to_db(
         user_id=user_db.user_id,
         content=content,
+        exclude_archived=False,  # Don't exclude for newly saved content!
         asession=asession,
     )
     return _convert_record_to_schema(content_db)
@@ -220,11 +222,19 @@ async def delete_content(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Content id `{content_id}` not found",
         )
-    await delete_content_from_db(
-        user_id=user_db.user_id,
-        content_id=content_id,
-        asession=asession,
-    )
+
+    try:
+        await delete_content_from_db(
+            user_id=user_db.user_id,
+            content_id=content_id,
+            asession=asession,
+        )
+    except sqlalchemy.exc.IntegrityError as e:
+        logger.error(f"Error deleting content: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Deletion of content with feedback is not allowed.",
+        ) from e
 
 
 @router.get("/{content_id}", response_model=ContentRetrieve)
@@ -258,6 +268,7 @@ async def retrieve_content_by_id(
 async def bulk_upload_contents(
     file: UploadFile,
     user_db: Annotated[UserDB, Depends(get_current_user)],
+    exclude_archived: bool = True,
     asession: AsyncSession = Depends(get_async_session),
 ) -> BulkUploadResponse:
     """Upload, check, and ingest contents in bulk from a CSV file.
@@ -330,8 +341,12 @@ async def bulk_upload_contents(
             content_tags=content_tags,
             content_metadata={},
         )
+
         content_db = await save_content_to_db(
-            user_id=user_db.user_id, content=content, asession=asession
+            user_id=user_db.user_id,
+            content=content,
+            exclude_archived=exclude_archived,
+            asession=asession,
         )
         content_retrieve = _convert_record_to_schema(content_db)
         created_contents.append(content_retrieve)
@@ -387,7 +402,10 @@ def _load_csv(file: UploadFile) -> pd.DataFrame:
                 )
             ]
         )
-        raise HTTPException(status_code=400, detail=error_list_model.dict())
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_list_model.model_dump(),
+        )
 
     return df
 
@@ -652,17 +670,25 @@ async def _check_content_quota_availability(
     # if content_quota is None, then there is no limit
     if content_quota is not None:
         # get the number of contents this user has already added
-        stmt = select(ContentDB).where(ContentDB.user_id == user_id)
-        user_contents = (await asession.execute(stmt)).all()
-        n_contents_in_db = len(user_contents)
+        stmt = select(ContentDB).where(
+            (ContentDB.user_id == user_id) & (~ContentDB.is_archived)
+        )
+        user_active_contents = (await asession.execute(stmt)).all()
+        n_contents_in_db = len(user_active_contents)
 
         # error if total of existing and new contents exceeds the quota
         if (n_contents_in_db + n_contents_to_add) > content_quota:
-            raise ExceedsContentQuotaError(
-                f"Adding {n_contents_to_add} new contents to the already existing "
-                f"{n_contents_in_db} in the database would exceed the allowed limit "
-                f"of {content_quota} contents."
-            )
+            if n_contents_in_db > 0:
+                raise ExceedsContentQuotaError(
+                    f"Adding {n_contents_to_add} new contents to the already existing "
+                    f"{n_contents_in_db} in the database would exceed the allowed "
+                    f"limit of {content_quota} contents."
+                )
+            else:
+                raise ExceedsContentQuotaError(
+                    f"Adding {n_contents_to_add} new contents to the database would "
+                    f"exceed the allowed limit of {content_quota} contents."
+                )
 
 
 def _extract_unique_tags(tags_col: pd.Series) -> List[str]:
@@ -678,7 +704,6 @@ def _extract_unique_tags(tags_col: pd.Series) -> List[str]:
     -------
     List[str]
         A list of unique tags.
-
     """
 
     # prep col

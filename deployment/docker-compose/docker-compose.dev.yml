@@ -2,6 +2,7 @@ services:
   core_backend:
     depends_on:
       - relational_db
+      - redis
     environment:
       - POSTGRES_HOST=relational_db
   relational_db:
@@ -11,7 +12,7 @@ services:
       - .env
     volumes:
       - db_volume:/var/lib/postgresql/data
-    ports:
+    ports: # Expose the port to port 5434 on the host machine for debugging
       - 5434:5432
 
 volumes:

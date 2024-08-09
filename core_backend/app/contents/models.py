@@ -32,10 +32,7 @@ from .config import (
     PGVECTOR_M,
     PGVECTOR_VECTOR_SIZE,
 )
-from .schemas import (
-    ContentCreate,
-    ContentUpdate,
-)
+from .schemas import ContentCreate, ContentUpdate
 
 
 class ContentDB(Base):
@@ -117,8 +114,10 @@ class ContentDB(Base):
 
 
 async def save_content_to_db(
+    *,
     user_id: int,
     content: ContentCreate,
+    exclude_archived: bool = False,
     asession: AsyncSession,
 ) -> ContentDB:
     """Vectorize the content and save to the database.
@@ -129,6 +128,8 @@ async def save_content_to_db(
         The ID of the user requesting the save.
     content
         The content to save.
+    exclude_archived
+        Specifies whether to exclude archived content.
     asession
         `AsyncSession` object for database transactions.
 
@@ -162,7 +163,7 @@ async def save_content_to_db(
     result = await get_content_from_db(
         user_id=content_db.user_id,
         content_id=content_db.content_id,
-        exclude_archived=False,  # Don't exclude for newly saved content!
+        exclude_archived=exclude_archived,
         asession=asession,
     )
     return result or content_db
@@ -229,7 +230,9 @@ async def update_content_in_db(
 
 
 async def increment_query_count(
-    user_id: int, contents: Dict[int, QuerySearchResult] | None, asession: AsyncSession
+    user_id: int,
+    contents: Dict[int, QuerySearchResult] | None,
+    asession: AsyncSession,
 ) -> None:
     """Increment the query count for the content.
 
