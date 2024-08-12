@@ -37,12 +37,3 @@ jobs:
           mike deploy \
             --push \
             --update-aliases ${{ github.ref_name }} latest
-
-      - name: Add CNAME
-        run: |
-          git fetch origin
-          git switch gh-pages
-          echo "docs.ask-a-question.com" >> CNAME
-          git add CNAME
-          git commit -m "Add CNAME"
-          git push origin gh-pages
