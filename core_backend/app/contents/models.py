@@ -526,7 +526,6 @@ async def get_search_results(
             text=r[0].content_text,
             distance=r[1],
         )
-    print(f"Lenth of search result: {len(results_dict)}")
     return results_dict
 
 
