@@ -1,12 +1,14 @@
+import os
 from functools import partial
 from typing import Any, Dict, List
+from unittest.mock import MagicMock, patch
 
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from core_backend.app.llm_call.llm_prompts import AlignmentScore, IdentifiedLanguage
 from core_backend.app.llm_call.process_input import (
-    _classify_on_off_topic,
     _classify_safety,
     _identify_language,
     _translate_question,
@@ -513,6 +515,114 @@ class TestGenerateResponse:
                 # user2 should not have any content
                 assert len(all_retireved_content_ids) == 0
 
+    @pytest.mark.parametrize(
+        "outcome, generate_tts, expected_status_code, expect_tts_file",
+        [
+            ("correct", True, 200, True),
+            ("correct", False, 200, False),
+            ("incorrect", True, 401, False),
+        ],
+    )
+    async def test_llm_response_with_tts_option(
+        self,
+        outcome: str,
+        generate_tts: bool,
+        expected_status_code: int,
+        expect_tts_file: bool,
+        client: TestClient,
+        mock_gtts: MagicMock,
+        api_key_user1: str,
+    ) -> None:
+        token = api_key_user1 if outcome == "correct" else "api_key_incorrect"
+        user_query = {
+            "query_text": "What is the capital of France?",
+            "generate_tts": generate_tts,
+            "generate_llm_response": True,
+        }
+
+        with patch("core_backend.app.voice_api.voice_components.gTTS", mock_gtts):
+            response = client.post(
+                "/search",
+                headers={"Authorization": f"Bearer {token}"},
+                json=user_query,
+            )
+
+            assert response.status_code == expected_status_code
+
+            if expected_status_code == 200:
+                json_response = response.json()
+
+                if expect_tts_file:
+                    assert json_response["tts_file"] is not None
+                else:
+                    assert json_response["tts_file"] is None
+
+
+class TestSTTLLMResponse:
+    @pytest.mark.parametrize(
+        "outcome, generate_tts, expected_status_code, mock_response",
+        [
+            ("correct", True, 200, {"text": "Paris"}),
+            ("correct", False, 200, {"text": "Paris"}),
+            ("incorrect", True, 401, {"error": "Unauthorized"}),
+            ("correct", True, 500, {}),
+        ],
+    )
+    def test_stt_llm_response(
+        self,
+        outcome: str,
+        generate_tts: bool,
+        expected_status_code: int,
+        mock_response: dict,
+        client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+        mock_gtts: MagicMock,
+        api_key_user1: str,
+    ) -> None:
+        token = api_key_user1 if outcome == "correct" else "api_key_incorrect"
+
+        async def dummy_post_to_speech(file_path: str, endpoint_url: str) -> dict:
+            if expected_status_code == 500:
+                raise HTTPException(
+                    status_code=500, detail={"error": "Internal Server Error"}
+                )
+            return mock_response
+
+        monkeypatch.setattr(
+            "core_backend.app.question_answer.routers.post_to_speech",
+            dummy_post_to_speech,
+        )
+
+        temp_dir = "temp"
+        os.makedirs(temp_dir, exist_ok=True)
+        file_path = os.path.join(temp_dir, "test.mp3")
+
+        with open(file_path, "wb") as f:
+            f.write(b"fake audio content")
+
+        with patch("core_backend.app.voice_api.voice_components.gTTS", mock_gtts):
+            response = client.post(
+                "/stt-llm-response",
+                headers={"Authorization": f"Bearer {token}"},
+                files={"file": ("test.mp3", open(file_path, "rb"), "audio/mpeg")},
+                data={"generate_tts": str(generate_tts).lower()},
+            )
+
+            assert response.status_code == expected_status_code
+
+            if expected_status_code == 200:
+                json_response = response.json()
+                assert "llm_response" in json_response
+            elif expected_status_code == 500:
+                json_response = response.json()
+                assert "detail" in json_response
+                assert response.status_code == 500
+
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            if os.path.exists(temp_dir) and not os.listdir(temp_dir):
+                os.rmdir(temp_dir)
+
 
 class TestErrorResponses:
     SUPPORTED_LANGUAGE = IdentifiedLanguage.get_supported_languages()[-1]
@@ -675,43 +785,6 @@ class TestErrorResponses:
         else:
             assert isinstance(response, QueryResponse)
             assert query.query_text == "This is a basic query"
-
-    @pytest.mark.parametrize(
-        "classification, should_error",
-        [
-            ("ON_TOPIC", False),
-            ("UNKNOWN", False),
-            ("OFF_TOPIC", True),
-            ("on topic", False),
-            ("Off_Topic", True),
-            ("Sorry..", False),
-            ("This is off topic", False),
-        ],
-    )
-    async def test_off_topic_query_error(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-        user_query_refined: QueryRefined,
-        user_query_response: QueryResponse,
-        classification: str,
-        should_error: bool,
-    ) -> None:
-        async def mock_ask_llm(llm_response: str, *args: Any, **kwargs: Any) -> str:
-            return llm_response
-
-        monkeypatch.setattr(
-            "core_backend.app.llm_call.process_input._ask_llm_async",
-            partial(mock_ask_llm, classification),
-        )
-        _, response = await _classify_on_off_topic(
-            user_query_refined, user_query_response
-        )
-
-        if should_error:
-            assert isinstance(response, QueryResponseError)
-            assert response.error_type == ErrorType.OFF_TOPIC
-        else:
-            assert isinstance(response, QueryResponse)
 
 
 class TestAlignScore:
