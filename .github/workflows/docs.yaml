@@ -35,10 +35,10 @@ jobs:
           git config user.name github-actions-runner
           git config user.email aaq@idinsight.org
           git fetch origin gh-pages
-          mike set-default latest
           mike deploy \
             --push \
             --update-aliases ${{ github.ref_name }} latest
+          mike set-default latest
 
       - name: Add CNAME
         run: |
