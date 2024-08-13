@@ -1,9 +1,5 @@
 name: Build and Push Images
 on:
-  workflow_dispatch:
-  push:
-    branches:  # TODO: remove this
-      - update-docker-compose
   release:
     types: [released]
 
@@ -41,20 +37,6 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
         with:
           registry-type: public
-
-      - name: Build and push Admin App
-        uses: docker/build-push-action@v5
-        env:
-          REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
-          REGISTRY_ALIAS: j3r7b4k0
-          REPOSITORY: momconnect-aaq/admin_app
-        with:
-          context: admin_app/
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:latest
-            ${{ env.REGISTRY }}/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:${{ github.ref_name }}
       
       - name: Build and push Core Backend
         uses: docker/build-push-action@v5
@@ -69,4 +51,3 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:latest
             ${{ env.REGISTRY }}/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:${{ github.ref_name }}
-

@@ -4,9 +4,6 @@ site_url: https://idinsight.github.io/momconnect-aaq
 repo_url: https://github.com/IDinsight/momconnect-aaq
 copyright: "© 2024 IDinsight"
 extra:
-  analytics:
-    provider: google
-    property: G-K07FFTMFTN
   generator: false
   social:
     - icon: material/shield-lock

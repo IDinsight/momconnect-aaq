@@ -1,6 +1,6 @@
 services:
   core_backend:
-    image: idinsight/aaq-backend:latest
+    image: public.ecr.aws/j3r7b4k0/momconnect-aaq/core_backend:latest
     build:
       context: ../../core_backend
       dockerfile: Dockerfile
@@ -21,7 +21,7 @@ services:
           path: ../../core_backend
 
   admin_app:
-    image: idinsight/aaq-admin-app:latest
+    image: public.ecr.aws/j3r7b4k0/momconnect-aaq/admin_app:latest
     build:
       context: ../../admin_app
       dockerfile: Dockerfile
