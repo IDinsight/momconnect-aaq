@@ -50,11 +50,11 @@ services:
     env_file:
       - .base.env
 
-  local-embeddings:
+  huggingface-embeddings:
     # image either refers to locally built image or defaults to the one from the registry
     image: ${EMBEDDINGS_IMAGE_NAME:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.5}
     profiles:
-      - local-embeddings
+      - huggingface-embeddings
       - optional-components
     volumes:
       - $PWD/data:/data
