@@ -14,15 +14,16 @@ POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
 
 # LiteLLM proxy variables
 # Endpoint
-LITELLM_ENDPOINT = os.environ.get("LITELLM_ENDPOINT", "http://localhost:4000")
-# API Key. Required but just a dummy for now. The actual OPENAI_API_KEY is set
-# in the proxy container.
-LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "dummy-key")
+LITELLM_ENDPOINT = os.environ.get("LITELLM_ENDPOINT", "http://localhost:8080")
+# API Key to access embeddings
+LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "update-embeddings-api-key")
 # Model names. All names come under "openai/..." and correspond to the
 # "model_name" in the proxy config.yaml.
 # "openai/..." is needed since the proxy presents a unified OpenAI-style API
 # for all of its endpoints.
-LITELLM_MODEL_EMBEDDING = os.environ.get("LITELLM_MODEL_EMBEDDING", "openai/embeddings")
+HUGGINGFACE_MODEL = os.environ.get("HUGGINGFACE_MODEL", "Alibaba-NLP/gte-large-en-v1.5")
+
+LITELLM_MODEL_EMBEDDING = f"huggingface/{HUGGINGFACE_MODEL}"
 LITELLM_MODEL_DEFAULT = os.environ.get("LITELLM_MODEL_DEFAULT", "openai/default")
 LITELLM_MODEL_GENERATION = os.environ.get(
     "LITELLM_MODEL_GENERATION",

@@ -18,16 +18,6 @@ from ..contents.models import (
     update_votes_in_db,
 )
 from ..database import get_async_session
-from ..llm_call.process_input import (
-    classify_safety__before,
-    identify_language__before,
-    paraphrase_question__before,
-    translate_question__before,
-)
-from ..llm_call.process_output import (
-    check_align_score__after,
-    generate_llm_response__after,
-)
 from ..users.models import UserDB
 from ..utils import create_langfuse_metadata, get_http_client, setup_logger
 from .config import N_TOP_CONTENT
@@ -230,12 +220,6 @@ async def search(
         )
 
 
-@identify_language__before
-@classify_safety__before
-@translate_question__before
-@paraphrase_question__before
-@generate_llm_response__after
-@check_align_score__after
 async def search_base(
     query_refined: QueryRefined,
     response: QueryResponse,
@@ -270,10 +254,6 @@ async def search_base(
     QueryResponse | QueryResponseError
         An appropriate query response object.
 
-    Raises
-    ------
-    ValueError
-        If the question language is not identified.
     """
 
     # always do the embeddings search even if some guardrails have failed

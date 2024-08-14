@@ -1,6 +1,6 @@
 #!make
 
-PROJECT_NAME = aaq
+PROJECT_NAME = momconnect-aaq
 CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
 ENDPOINT_URL = localhost:8000
 OPENAI_API_KEY := $(shell printenv OPENAI_API_KEY)
@@ -28,8 +28,8 @@ fresh-env :
 	fi
 
 # Dev requirements
-setup-dev: setup-db setup-redis add-users-to-db setup-llm-proxy
-teardown-dev: teardown-db teardown-redis teardown-llm-proxy
+setup-dev: setup-db setup-redis add-users-to-db setup-embeddings-arm
+teardown-dev: teardown-db teardown-redis teardown-embeddings
 
 ## Helper targets
 
@@ -117,7 +117,7 @@ setup-embeddings-arm:
         -v "$(PWD)/data:/data" \
         -d text-embeddings-inference-arm \
         --model-id $(HUGGINGFACE_MODEL) \
-        --api-key $(CUSTOM_EMBEDDINGS_API_KEY)
+        --api-key $(LITELLM_API_KEY)
 
 setup-embeddings:
 	-@docker stop huggingface-embeddings
@@ -130,7 +130,7 @@ setup-embeddings:
 		-v "$(PWD)/data:/data" \
 		--pull always ghcr.io/huggingface/text-embeddings-inference:cpu-1.5 \
 		--model-id $(HUGGINGFACE_MODEL) \
-		--api-key $(CUSTOM_EMBEDDINGS_API_KEY)
+		--api-key $(LITELLM_API_KEY)
 
 teardown-embeddings:
 	@docker stop huggingface-embeddings

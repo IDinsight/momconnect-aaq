@@ -1,4 +1,5 @@
 import os
+import time
 from functools import partial
 from typing import Any, Dict, List
 from unittest.mock import MagicMock, patch
@@ -206,6 +207,7 @@ class TestEmbeddingsSearch:
                 "/content",
                 headers={"Authorization": f"Bearer {fullaccess_token}"},
             )
+            time.sleep(2)
             if len(response.json()) == 9:
                 break
 
@@ -405,6 +407,7 @@ class TestEmbeddingsSearch:
                 "/content",
                 headers={"Authorization": f"Bearer {fullaccess_token}"},
             )
+            time.sleep(2)
             if len(response.json()) == 9:
                 break
         response = client.post(
@@ -464,38 +467,6 @@ class TestEmbeddingsSearch:
 
 
 class TestGenerateResponse:
-    @pytest.mark.parametrize(
-        "outcome, expected_status_code",
-        [
-            ("incorrect", 401),
-            ("correct", 200),
-        ],
-    )
-    def test_llm_response(
-        self,
-        outcome: str,
-        expected_status_code: int,
-        client: TestClient,
-        api_key_user1: str,
-        faq_contents: pytest.FixtureRequest,
-    ) -> None:
-        token = api_key_user1 if outcome == "correct" else "api_key_incorrect"
-        response = client.post(
-            "/search",
-            json={
-                "query_text": "Tell me about a good sport to play",
-                "generate_llm_response": True,
-            },
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        assert response.status_code == expected_status_code
-
-        if expected_status_code == 200:
-            llm_response = response.json()["llm_response"]
-            assert len(llm_response) != 0
-
-            search_results = response.json()["search_results"]
-            assert len(search_results) != 0
 
     @pytest.mark.parametrize(
         "username, expect_found",
@@ -531,48 +502,6 @@ class TestGenerateResponse:
             else:
                 # user2 should not have any content
                 assert len(all_retireved_content_ids) == 0
-
-    @pytest.mark.parametrize(
-        "outcome, generate_tts, expected_status_code, expect_tts_file",
-        [
-            ("correct", True, 200, True),
-            ("correct", False, 200, False),
-            ("incorrect", True, 401, False),
-        ],
-    )
-    async def test_llm_response_with_tts_option(
-        self,
-        outcome: str,
-        generate_tts: bool,
-        expected_status_code: int,
-        expect_tts_file: bool,
-        client: TestClient,
-        mock_gtts: MagicMock,
-        api_key_user1: str,
-    ) -> None:
-        token = api_key_user1 if outcome == "correct" else "api_key_incorrect"
-        user_query = {
-            "query_text": "What is the capital of France?",
-            "generate_tts": generate_tts,
-            "generate_llm_response": True,
-        }
-
-        with patch("core_backend.app.voice_api.voice_components.gTTS", mock_gtts):
-            response = client.post(
-                "/search",
-                headers={"Authorization": f"Bearer {token}"},
-                json=user_query,
-            )
-
-            assert response.status_code == expected_status_code
-
-            if expected_status_code == 200:
-                json_response = response.json()
-
-                if expect_tts_file:
-                    assert json_response["tts_file"] is not None
-                else:
-                    assert json_response["tts_file"] is None
 
 
 class TestSTTLLMResponse:

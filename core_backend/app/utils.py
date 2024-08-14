@@ -136,7 +136,6 @@ async def embedding(text_to_embed: str, metadata: Optional[dict] = None) -> List
     """
 
     metadata = metadata or {}
-
     content_embedding = await aembedding(
         model=LITELLM_MODEL_EMBEDDING,
         input=text_to_embed,

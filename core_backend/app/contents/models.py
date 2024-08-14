@@ -526,7 +526,6 @@ async def get_search_results(
             text=r[0].content_text,
             distance=r[1],
         )
-
     return results_dict
 
 
