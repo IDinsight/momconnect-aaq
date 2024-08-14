@@ -12,6 +12,7 @@ services:
       - .core_backend.env
     environment:
       - REDIS_HOST=redis://redis:6379
+      - LITELLM_ENDPOINT=http://huggingface-embeddings
     depends_on:
       - redis
     develop:
@@ -62,7 +63,7 @@ services:
       ["--model-id", "${HUGGINGFACE_MODEL}", "--api-key", "${LITELLM_API_KEY}"]
     restart: always
     env_file:
-      - .litellm_proxy.env
+      - .core_backend.env
     develop:
       watch:
         - action: rebuild

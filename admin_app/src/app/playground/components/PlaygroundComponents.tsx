@@ -145,9 +145,9 @@ const PersistentSearchBar = ({
                   <MenuItem value="embeddings-search" autoFocus={true}>
                     <Typography variant="body2">Content Search</Typography>
                   </MenuItem>
-                  <MenuItem value="llm-response">
+                  {/* <MenuItem value="llm-response">
                     <Typography variant="body2">AI Response</Typography>
-                  </MenuItem>
+                  </MenuItem>*/}
                   <MenuItem value="urgency-detection">
                     <Typography variant="body2">Urgency Detection</Typography>
                   </MenuItem>

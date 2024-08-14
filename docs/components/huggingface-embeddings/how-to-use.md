@@ -86,7 +86,7 @@ make setup-embeddings-arm
 
 !!! warning "Before running the commands above, you must export environment variables `HUGGINGFACE_MODEL` and `HUGGINGFACE_EMBEDDINGS_API_KEY`."
 
-The embeddings API endpoint by default is at: [http://localhost:5000](http://localhost:5000).
+The embeddings API endpoint by default is at: [http://localhost:8081](http://localhost:8081).
 
 
 ## Also see
