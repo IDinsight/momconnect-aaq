@@ -51,29 +51,6 @@ services:
     env_file:
       - .base.env
 
-  litellm_proxy:
-    image: ghcr.io/berriai/litellm:main-v1.40.10
-    restart: always
-    env_file:
-      - .litellm_proxy.env
-    volumes:
-      - ./litellm_proxy_config.yaml:/app/config.yaml
-      - ./.gcp_credentials.json:/app/credentials.json
-    command:
-      ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "4"]
-
-  alignScore:
-    image: idinsight/alignscore-base:latest
-    profiles:
-      - alignScore
-      - optional-components
-    build:
-      context: ../../optional_components/alignScore
-      dockerfile: Dockerfile
-    command: >
-      /usr/local/bin/python server.py --port=5001 --models=base
-    restart: always
-
   local-embeddings:
     # image either refers to locally built image or defaults to the one from the registry
     image: ${EMBEDDINGS_IMAGE_NAME:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.5}
@@ -83,12 +60,7 @@ services:
     volumes:
       - $PWD/data:/data
     command:
-      [
-        "--model-id",
-        "${HUGGINGFACE_MODEL}",
-        "--api-key",
-        "${CUSTOM_EMBEDDINGS_API_KEY}",
-      ]
+      ["--model-id", "${HUGGINGFACE_MODEL}", "--api-key", "${LITELLM_API_KEY}"]
     restart: always
     env_file:
       - .litellm_proxy.env

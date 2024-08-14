@@ -169,6 +169,7 @@ async def faq_contents(
             content_metadata=content.get("content_metadata", {}),
             created_datetime_utc=datetime.now(timezone.utc),
             updated_datetime_utc=datetime.now(timezone.utc),
+            is_archived=False,
         )
         contents.append(content_db)
 

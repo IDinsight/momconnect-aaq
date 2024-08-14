@@ -14,7 +14,7 @@ class QueryBase(BaseModel):
 
     query_text: str = Field(..., examples=["What is AAQ?"])
     session_id: Optional[int] = None
-    generate_llm_response: bool = Field(False)
+    generate_llm_response: Optional[bool] = Field(False)
     query_metadata: dict = Field({}, examples=[{"some_key": "some_value"}])
     generate_tts: bool = Field(False)
 

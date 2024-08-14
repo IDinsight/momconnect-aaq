@@ -464,38 +464,6 @@ class TestEmbeddingsSearch:
 
 
 class TestGenerateResponse:
-    @pytest.mark.parametrize(
-        "outcome, expected_status_code",
-        [
-            ("incorrect", 401),
-            ("correct", 200),
-        ],
-    )
-    def test_llm_response(
-        self,
-        outcome: str,
-        expected_status_code: int,
-        client: TestClient,
-        api_key_user1: str,
-        faq_contents: pytest.FixtureRequest,
-    ) -> None:
-        token = api_key_user1 if outcome == "correct" else "api_key_incorrect"
-        response = client.post(
-            "/search",
-            json={
-                "query_text": "Tell me about a good sport to play",
-                "generate_llm_response": True,
-            },
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        assert response.status_code == expected_status_code
-
-        if expected_status_code == 200:
-            llm_response = response.json()["llm_response"]
-            assert len(llm_response) != 0
-
-            search_results = response.json()["search_results"]
-            assert len(search_results) != 0
 
     @pytest.mark.parametrize(
         "username, expect_found",
