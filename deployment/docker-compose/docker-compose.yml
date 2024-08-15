@@ -12,7 +12,6 @@ services:
       - .core_backend.env
     environment:
       - REDIS_HOST=redis://redis:6379
-      - LITELLM_ENDPOINT=http://huggingface-embeddings
     depends_on:
       - redis
     develop:
@@ -71,7 +70,8 @@ services:
 
   redis:
     image: "redis:6.0-alpine"
-    ports: # Expose the port to port 6380 on the host machine for debugging
+    ports:
+      # Expose the port to port 6380 on the host machine for debugging
       - "6380:6379"
     restart: always
 
