@@ -37,7 +37,7 @@ teardown-dev: teardown-db teardown-redis teardown-embeddings
 add-users-to-db:
 	$(CONDA_ACTIVATE) $(PROJECT_NAME); \
 	set -a && \
-        source $(CURDIR)/deployment/docker-compose/.core_backend.env && \
+        source "$(CURDIR)/deployment/docker-compose/.core_backend.env" && \
         set +a && \
 	python core_backend/add_users_to_db.py
 
@@ -52,8 +52,8 @@ setup-db:
 		-p 5432:5432 \
 		-d pgvector/pgvector:pg16
 	set -a && \
-        source $(CURDIR)/deployment/docker-compose/.base.env && \
-        source $(CURDIR)/deployment/docker-compose/.core_backend.env && \
+        source "$(CURDIR)/deployment/docker-compose/.base.env" && \
+        source "$(CURDIR)/deployment/docker-compose/.core_backend.env" && \
         set +a && \
 	cd core_backend && \
 	python -m alembic upgrade head
@@ -113,7 +113,7 @@ setup-embeddings-arm:
 	@sleep 2
 	@docker run \
 		--name huggingface-embeddings \
-        -p 8080:80 \
+        -p 8081:80 \
         -v "$(PWD)/data:/data" \
         -d text-embeddings-inference-arm \
         --model-id $(HUGGINGFACE_MODEL) \
@@ -126,7 +126,7 @@ setup-embeddings:
 	@sleep 2
 	@docker run \
 		--name huggingface-embeddings \
-		-p 8080:80 \
+		-p 8081:80 \
 		-v "$(PWD)/data:/data" \
 		--pull always ghcr.io/huggingface/text-embeddings-inference:cpu-1.5 \
 		--model-id $(HUGGINGFACE_MODEL) \

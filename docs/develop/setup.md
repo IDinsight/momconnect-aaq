@@ -6,7 +6,7 @@ Please fork the
 [project repository](https://github.com/IDinsight/ask-a-question) by clicking on the
 "Fork" button. Then, clone the repo using your own GitHub handle:
 
-    git clone git@github.com:<your GitHub handle>/ask-a-question.git
+    git clone git@github.com:<your GitHub handle>/momconnect-aaq.git
 
 For questions related to setup, please contact
 [AAQ Support](mailto:aaq@idinsight.org?Subject=AAQ%20Setup%20Help)
@@ -24,7 +24,6 @@ For questions related to setup, please contact
     ```shell
     cp template.base.env .base.env
     cp template.core_backend.env .core_backend.env
-    cp template.litellm_proxy.env .litellm_proxy.env
     ```
 
 3. Update `.litellm_proxy.env` with LLM service credentials. This will be used by

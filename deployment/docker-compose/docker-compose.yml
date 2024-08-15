@@ -50,11 +50,11 @@ services:
     env_file:
       - .base.env
 
-  local-embeddings:
+  huggingface-embeddings:
     # image either refers to locally built image or defaults to the one from the registry
     image: ${EMBEDDINGS_IMAGE_NAME:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.5}
     profiles:
-      - local-embeddings
+      - huggingface-embeddings
       - optional-components
     volumes:
       - $PWD/data:/data
@@ -62,7 +62,7 @@ services:
       ["--model-id", "${HUGGINGFACE_MODEL}", "--api-key", "${LITELLM_API_KEY}"]
     restart: always
     env_file:
-      - .litellm_proxy.env
+      - .core_backend.env
     develop:
       watch:
         - action: rebuild
@@ -70,7 +70,8 @@ services:
 
   redis:
     image: "redis:6.0-alpine"
-    ports: # Expose the port to port 6380 on the host machine for debugging
+    ports:
+      # Expose the port to port 6380 on the host machine for debugging
       - "6380:6379"
     restart: always
 
