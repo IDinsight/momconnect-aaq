@@ -42,12 +42,3 @@ jobs:
           mike retitle v0.2.1 "v0.2.1"
           mike retitle v0.2.2 "v0.2.1"
           mike set-default latest --allow-undefined --push
-
-      - name: Add CNAME
-        run: |
-          git fetch origin
-          git switch gh-pages
-          echo "docs.ask-a-question.com" > CNAME
-          git add CNAME
-          git commit -m "Add CNAME"
-          git push origin gh-pages
