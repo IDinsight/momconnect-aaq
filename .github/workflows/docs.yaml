@@ -39,6 +39,4 @@ jobs:
             --push \
             --title="${{ github.ref_name }}" \
             --update-aliases ${{ github.ref_name }} latest
-          mike retitle v0.2.1 "v0.2.1"
-          mike retitle v0.2.2 "v0.2.1"
           mike set-default latest --allow-undefined --push
