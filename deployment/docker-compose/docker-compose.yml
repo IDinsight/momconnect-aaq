@@ -7,14 +7,19 @@ services:
     command: >
       /bin/sh startup.sh
     restart: always
+    volumes:
+      - temp:/usr/src/aaq_backend/temp
+      - ./.gcp_credentials.json:/app/credentials.json
     env_file:
       - .base.env
       - .core_backend.env
+      - .litellm_proxy.env
     environment:
       - REDIS_HOST=redis://redis:6379
       - LITELLM_ENDPOINT=http://huggingface-embeddings
     depends_on:
       - redis
+
     develop:
       watch:
         - action: rebuild
@@ -60,19 +65,10 @@ services:
     volumes:
       - $PWD/data:/data
     command:
-      [
-        "--model-id",
-        "/data/gte-large-en-v1.5",
-        "--api-key",
-        "${LITELLM_API_KEY}",
-      ]
+      ["--model-id", "/data/gte-large-en-v1.5", "--api-key", "${LITELLM_API_KEY}"]
     restart: always
     env_file:
-      - .core_backend.env
-    develop:
-      watch:
-        - action: rebuild
-          path: ../../optional_components/embeddings
+      - .litellm_proxy.env
 
   redis:
     image: "redis:6.0-alpine"
@@ -84,3 +80,4 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+  temp:

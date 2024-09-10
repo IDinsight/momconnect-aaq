@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Dict, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
+from pydantic.json_schema import SkipJsonSchema
 
 from ..llm_call.llm_prompts import IdentifiedLanguage
 from ..schemas import FeedbackSentiment, QuerySearchResult
@@ -13,10 +14,9 @@ class QueryBase(BaseModel):
     """
 
     query_text: str = Field(..., examples=["What is AAQ?"])
-    session_id: Optional[int] = None
     generate_llm_response: Optional[bool] = Field(False)
     query_metadata: dict = Field({}, examples=[{"some_key": "some_value"}])
-    generate_tts: bool = Field(False)
+    session_id: SkipJsonSchema[int | None] = Field(default=None, exclude=True)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -28,6 +28,7 @@ class QueryRefined(QueryBase):
 
     user_id: int
     query_text_original: str
+    generate_tts: bool = Field(False)
     original_language: IdentifiedLanguage | None = None
 
 
@@ -54,39 +55,44 @@ class QueryResponse(BaseModel):
     """
 
     query_id: int = Field(..., examples=[1])
-    session_id: Optional[int] = None
+    session_id: int | None = Field(None, exclude=True)
     feedback_secret_key: str = Field(..., examples=["secret-key-12345-abcde"])
     llm_response: str | None = Field(None, examples=["Example LLM response"])
-    tts_file: str | None = Field(None, examples=["response.mp3"])
+
     search_results: Dict[int, QuerySearchResult] | None = Field(
-        None,
         examples=[
             {
-                "query_id": 1,
-                "session_id": 1,
-                "feedback_secret_key": "secret-key-12345-abcde",
-                "llm_response": "Example LLM response "
-                "(null if generate_llm_response is false)",
-                "search_results": {
-                    "0": {
-                        "title": "Example content title",
-                        "text": "Example content text",
-                        "id": 23,
-                        "distance": 0.1,
-                    },
-                    "1": {
-                        "title": "Another example content title",
-                        "text": "Another example content text",
-                        "id": 12,
-                        "distance": 0.2,
-                    },
+                "0": {
+                    "title": "Example content title",
+                    "text": "Example content text",
+                    "id": 23,
+                    "distance": 0.1,
                 },
-                "debug_info": {"example": "debug-info"},
+                "1": {
+                    "title": "Another example content title",
+                    "text": "Another example content text",
+                    "id": 12,
+                    "distance": 0.2,
+                },
             }
         ],
     )
     debug_info: dict = Field({}, examples=[{"example": "debug-info"}])
 
+    model_config = ConfigDict(from_attributes=True)
+
+
+class QueryAudioResponse(QueryResponse):
+    """
+    Pydantic model for response to a Voice Query with audio response and Text response
+    """
+
+    tts_filepath: str | None = Field(
+        None,
+        examples=[
+            "https://storage.googleapis.com/example-bucket/random_uuid_filename.mp3"
+        ],
+    )
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -96,7 +102,7 @@ class QueryResponseError(QueryResponse):
     """
 
     error_type: ErrorType = Field(..., examples=["example_error"])
-    error_message: Optional[str] = Field(None, examples=["Example error message"])
+    error_message: str | None = Field(None, examples=["Example error message"])
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -108,11 +114,11 @@ class ResponseFeedbackBase(BaseModel):
     """
 
     query_id: int = Field(..., examples=[1])
-    session_id: Optional[int] = None
+    session_id: SkipJsonSchema[int | None] = None
     feedback_sentiment: FeedbackSentiment = Field(
         FeedbackSentiment.UNKNOWN, examples=["positive"]
     )
-    feedback_text: Optional[str] = Field(None, examples=["This is helpful"])
+    feedback_text: str | None = Field(None, examples=["This is helpful"])
     feedback_secret_key: str = Field(..., examples=["secret-key-12345-abcde"])
 
     model_config = ConfigDict(from_attributes=True)

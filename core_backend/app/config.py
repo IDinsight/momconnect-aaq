@@ -1,3 +1,8 @@
+"""
+Config for core_backend. Not that there are other config files within
+each endpoin module
+"""
+
 import os
 
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
@@ -32,15 +37,10 @@ HUGGINGFACE_MODEL = os.environ.get("HUGGINGFACE_MODEL", "Alibaba-NLP/gte-large-e
 LITELLM_MODEL_EMBEDDING = f"huggingface/{HUGGINGFACE_MODEL}"
 LITELLM_MODEL_DEFAULT = os.environ.get("LITELLM_MODEL_DEFAULT", "openai/default")
 LITELLM_MODEL_GENERATION = os.environ.get(
-    "LITELLM_MODEL_GENERATION",
-    "openai/generate-gemini-response",
-    # "LITELLM_MODEL_GENERATION", "openai/generate-response"
+    "LITELLM_MODEL_GENERATION", "openai/generate-response"
 )
 LITELLM_MODEL_LANGUAGE_DETECT = os.environ.get(
     "LITELLM_MODEL_LANGUAGE_DETECT", "openai/detect-language"
-)
-LITELLM_MODEL_ON_OFF_TOPIC = os.environ.get(
-    "LITELLM_MODEL_ON_OFF_TOPIC", "openai/on-off-topic"
 )
 LITELLM_MODEL_TRANSLATE = os.environ.get("LITELLM_MODEL_TRANSLATE", "openai/translate")
 LITELLM_MODEL_SAFETY = os.environ.get("LITELLM_MODEL_SAFETY", "openai/safety")
@@ -53,24 +53,38 @@ LITELLM_MODEL_ALIGNSCORE = os.environ.get(
 LITELLM_MODEL_URGENCY_DETECT = os.environ.get(
     "LITELLM_MODEL_URGENCY_DETECT", "openai/urgency-detection"
 )
+LITELLM_MODEL_DASHBOARD_SUMMARY = os.environ.get(
+    "LITELLM_MODEL_DASHBOARD_SUMMARY", "openai/dashboard-summary"
+)
+
+LITELLM_MODEL_TOPIC_MODEL = os.environ.get(
+    "LITELLM_MODEL_TOPIC_MODEL", "openai/topic-label"
+)
+# On/Off Topic variables
+SERVICE_IDENTITY = os.environ.get(
+    "SERVICE_IDENTITY", "air pollution and air quality chatbot"
+)
+# Cross-encoder
+USE_CROSS_ENCODER = os.environ.get("USE_CROSS_ENCODER", "True")
+CROSS_ENCODER_MODEL = os.environ.get(
+    "CROSS_ENCODER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2"
+)
 
 # Rate limit variables
 CHECK_CONTENT_LIMIT = os.environ.get("CHECK_CONTENT_LIMIT", True)
 DEFAULT_CONTENT_QUOTA = int(os.environ.get("DEFAULT_CONTENT_QUOTA", 50))
 DEFAULT_API_QUOTA = int(os.environ.get("DEFAULT_API_QUOTA", 100))
+CHECK_API_LIMIT = os.environ.get("CHECK_API_LIMIT", True)
 
 # Alignment Score variables
 ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
-# Method: LLM, AlignScore, or None
-ALIGN_SCORE_METHOD = os.environ.get("ALIGN_SCORE_METHOD", "LLM")
-# if AlignScore, set ALIGN_SCORE_API. If LLM, set LITELLM_MODEL_ALIGNSCORE above.
-ALIGN_SCORE_API = os.environ.get("ALIGN_SCORE_API", "")
+
 
 # Backend paths
 BACKEND_ROOT_PATH = os.environ.get("BACKEND_ROOT_PATH", "")
-SPEECH_ENDPOINT = os.environ.get(
-    "SPEECH_ENDPOINT", "http://speech_service:8001/transcribe"
-)
+
+# Speech API
+CUSTOM_SPEECH_ENDPOINT = os.environ.get("CUSTOM_SPEECH_ENDPOINT", None)
 # Logging
 LANGFUSE = os.environ.get("LANGFUSE", "False")
 
@@ -79,3 +93,6 @@ DB_POOL_SIZE = os.environ.get("DB_POOL_SIZE", 20)  # Number of connections in th
 
 # Redis
 REDIS_HOST = os.environ.get("REDIS_HOST", "redis://localhost:6379")
+
+# Google Cloud storage
+GCS_SPEECH_BUCKET = os.environ.get("GCS_SPEECH_BUCKET", "aaq-speech-test")

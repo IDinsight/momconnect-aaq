@@ -29,6 +29,7 @@ from app.database import get_session
 from app.question_answer.models import (
     ContentFeedbackDB,
     QueryDB,
+    QueryResponseContentDB,
     ResponseFeedbackDB,
 )
 from app.urgency_detection.models import UrgencyQueryDB, UrgencyResponseDB
@@ -38,7 +39,7 @@ ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "fullaccess")
 _USER_ID = 1
 
-N_DATAPOINTS = 100
+N_DATAPOINTS = 2000
 URGENCY_RATE = 0.1
 NEGATIVE_FEEDBACK_RATE = 0.1
 
@@ -130,6 +131,7 @@ def create_data(dt: datetime) -> None:
             is_negative=content_feedback_is_negative,
             session=session,
         )
+        create_content_for_query(dt=dt, query_id=query_id, session=session)
     session.close()
 
 
@@ -185,7 +187,7 @@ def create_query_record(dt: datetime, session: Session) -> QueryDB:
         user_id=_USER_ID,
         session_id=1,
         feedback_secret_key="abc123",  # pragma: allowlist secret
-        query_text="test query",
+        query_text=generate_synthetic_query(),
         query_generate_llm_response=False,
         query_metadata={},
         query_datetime_utc=dt,
@@ -206,6 +208,8 @@ def create_response_feedback_record(
         The datetime for which to create a record.
     query_id
         The ID of the query record.
+    session_id
+        The ID of the session record.
     is_negative
         Specifies whether the feedback is negative.
     session
@@ -224,6 +228,10 @@ def create_response_feedback_record(
     session.commit()
 
 
+POSITIVE_FEEDBACK_TEXTS = ["Great!", "Very helpful!", "Thanks!"]
+NEGATIVE_FEEDBACK_TEXTS = ["Not helpful", "Confusing", "Too long"]
+
+
 def create_content_feedback_record(
     dt: datetime,
     query_id: int,
@@ -239,6 +247,8 @@ def create_content_feedback_record(
         The datetime for which to create a record.
     query_id
         The ID of the query record.
+    session_id
+        The ID of the session record.
     is_negative
         Specifies whether the content feedback is negative.
     session
@@ -246,6 +256,11 @@ def create_content_feedback_record(
     """
 
     sentiment = "negative" if is_negative else "positive"
+    sentiment_text = (
+        random.choice(NEGATIVE_FEEDBACK_TEXTS)
+        if is_negative
+        else random.choice(POSITIVE_FEEDBACK_TEXTS)
+    )
     all_content_ids = [c.content_id for c in session.query(ContentDB).all()]
     content_ids = random.choices(all_content_ids, k=3)
     for content_id in content_ids:
@@ -256,8 +271,30 @@ def create_content_feedback_record(
             session_id=session_id,
             content_id=content_id,
             feedback_sentiment=sentiment,
+            feedback_text=sentiment_text,
         )
         session.add(feedback_db)
+        session.commit()
+
+
+def create_content_for_query(dt: datetime, query_id: int, session: Session) -> None:
+    """
+    Create a QueryResponseContentDB record for a given datetime and query_id.
+    """
+    all_content_ids = [c.content_id for c in session.query(ContentDB).all()]
+    content_ids = random.choices(
+        all_content_ids,
+        weights=[c.query_count for c in session.query(ContentDB).all()],
+        k=8,
+    )
+    for content_id in content_ids:
+        response_db = QueryResponseContentDB(
+            query_id=query_id,
+            content_id=content_id,
+            user_id=1,
+            created_datetime_utc=dt,
+        )
+        session.add(response_db)
         session.commit()
 
 
@@ -270,6 +307,11 @@ def add_content_data() -> None:
         "Yes, pregnancy can cause TOOTHACHE",
         "Ways to manage HEARTBURN in pregnancy",
         "Some LEG cramps are normal during pregnancy",
+        "How to handle swollen FEET",
+        "Managing GAS and bloating during pregnancy",
+        "Yes, pregnancy can affect your BREATHING",
+        "Snack often to prevent DIZZINESS",
+        "FAINTING could mean anemia – visit the clinic to find out",
     ]
 
     for i, c in enumerate(content):
@@ -295,6 +337,104 @@ def add_content_data() -> None:
         session.add(content_db)
         session.commit()
         session.close()
+
+
+MATERNAL_HEALTH_TERMS = [
+    # General Terms
+    "pregnancy",
+    "birth",
+    "postpartum",
+    "natal care",
+    "breastfeeding",
+    "midwife",
+    "maternal health",
+    "childbirth",
+    "labor",
+    "delivery",
+    "newborn",
+    "baby",
+    "preterm birth",
+    "gestational diabetes",
+    "ultrasound",
+    "fetal monitoring",
+    "prenatal care",
+    "maternity leave",
+    "family planning",
+    # Medical Conditions
+    "preeclampsia",
+    "eclampsia",
+    "placenta previa",
+    "placental abruption",
+    "hyperemesis gravidarum",
+    "chorioamnionitis",
+    "amniotic fluid embolism",
+    "postpartum hemorrhage",
+    "polyhydramnios",
+    "oligohydramnios",
+    "intrauterine growth restriction",
+    "stillbirth",
+    "hemolytic disease",
+    # Procedures and Tests
+    "amniocentesis",
+    "chorionic villus sampling",
+    "non-stress test",
+    "biophysical profile",
+    "doppler ultrasound",
+    "glucose tolerance test",
+    "cervical check",
+    "internal fetal monitoring",
+    # Support and Care
+    "lactation consultant",
+    "doula",
+    "support group",
+    "parenting classes",
+    "infant care",
+    "postpartum support",
+    "mental health screening",
+    "breastfeeding support",
+    "pediatric care",
+    # Wellness and Lifestyle
+    "nutrition during pregnancy",
+    "exercise during pregnancy",
+    "birth plan",
+    "home birth",
+    "hospital birth",
+    "water birth",
+    "natural birth",
+    "epidural",
+    "pain management",
+    "birthing center",
+    # Emotional and Psychological Aspects
+    "postpartum depression",
+    "anxiety",
+    "parenting stress",
+    "bonding with baby",
+    "maternal bonding",
+    "new parent support",
+    "adjustment to parenthood",
+    "family dynamics",
+]
+
+# Common query templates
+QUERY_TEMPLATES = [
+    "What are the symptoms of {term}?",
+    "How can I manage {term} during pregnancy?",
+    "What is {term} and how does it affect childbirth?",
+    "Where can I find support for {term}?",
+    "What are the latest treatments for {term}?",
+    "Is {term} common during pregnancy?",
+    "How does {term} impact postpartum recovery?",
+    "What should I know about {term} before giving birth?",
+    "Can {term} affect my baby’s health?",
+    "What are the best practices for dealing with {term}?",
+]
+
+
+def generate_synthetic_query() -> str:
+    """Generates a random human-like query related to maternal health."""
+    template = random.choice(QUERY_TEMPLATES)
+    term = random.choice(MATERNAL_HEALTH_TERMS)
+    return template.format(term=term)
 
 
 if __name__ == "__main__":

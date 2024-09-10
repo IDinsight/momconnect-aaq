@@ -1,7 +1,6 @@
 import json
 from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple
-from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -513,9 +512,34 @@ def alembic_engine() -> Engine:
     return create_engine(get_connection_url(db_api=SYNC_DB_API))
 
 
-@pytest.fixture
-def mock_gtts() -> MagicMock:
-    mock_gTTS = MagicMock()
-    mock_gTTS_instance = mock_gTTS.return_value
-    mock_gTTS_instance.save = MagicMock()
-    return mock_gTTS
+@pytest.fixture(scope="session", autouse=True)
+def patch_voice_gcs_functions(monkeysession: pytest.MonkeyPatch) -> None:
+    """
+    Monkeypatch GCS functions to replace their real implementations with dummy ones.
+    """
+    monkeysession.setattr(
+        "core_backend.app.question_answer.routers.upload_file_to_gcs",
+        async_fake_upload_file_to_gcs,
+    )
+    monkeysession.setattr(
+        "core_backend.app.question_answer.speech_components.external_voice_components.upload_file_to_gcs",
+        async_fake_upload_file_to_gcs,
+    )
+    monkeysession.setattr(
+        "core_backend.app.question_answer.speech_components.external_voice_components.generate_public_url",
+        async_fake_generate_public_url,
+    )
+
+
+async def async_fake_upload_file_to_gcs(*args: Any, **kwargs: Any) -> None:
+    """
+    A dummy function to replace the real upload_file_to_gcs function.
+    """
+    pass
+
+
+async def async_fake_generate_public_url(*args: Any, **kwargs: Any) -> str:
+    """
+    A dummy function to replace the real generate_public_url function.
+    """
+    return "http://example.com/signed-url"
