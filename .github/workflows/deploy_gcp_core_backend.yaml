@@ -75,6 +75,7 @@ jobs:
         working-directory: deployment/docker-compose
         run: |
           echo '${{ steps.secrets.outputs.gcp-credential-json }}' > .gcp_credentials.json
+          echo 'ZONE="${{ secrets.DEPLOYMENT_ZONE }}"'
           gcloud compute scp .gcp_credentials.json \
               ${{ secrets.DEPLOYMENT_INSTANCE_NAME }}:~/.gcp_credentials.json \
               --zone ${{ secrets.DEPLOYMENT_ZONE }}
