@@ -21,12 +21,10 @@ jobs:
       - name: Resolve deployment environment name
         id: set-env
         run: |
-          if [ "${{ github.event_name }}" == "release" ] && [ "${{ github.event.action }}" == "released" ]; then
-            echo "env_name=production" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.ref_name }}" == "main" ]; then
+          if [ "${{ github.ref_name }}" == "main" ]; then
             echo "env_name=testing" >> "$GITHUB_OUTPUT"
           else
-            echo "env_name=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+            echo "env_name=testing" >> "$GITHUB_OUTPUT"
           fi
 
   DeployRedisToGCP:
@@ -38,7 +36,7 @@ jobs:
       contents: "read"
       id-token: "write"
 
-    environment: gcp-${{ needs.set-env.outputs.env_name }}
+    environment: mc-aaq-${{ needs.set-env.outputs.env_name }}
 
     env:
       RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ needs.set-env.outputs.env_name }}
