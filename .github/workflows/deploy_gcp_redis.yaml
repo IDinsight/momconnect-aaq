@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - testing
-      - deployment-action
+
     paths:
       - ".github/workflows/deploy_gcp_redis.yaml"
   release:
@@ -24,7 +24,7 @@ jobs:
           if [ "${{ github.ref_name }}" == "main" ]; then
             echo "env_name=testing" >> "$GITHUB_OUTPUT"
           else
-            echo "env_name=testing" >> "$GITHUB_OUTPUT"
+            echo "env_name=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
           fi
 
   DeployRedisToGCP:
