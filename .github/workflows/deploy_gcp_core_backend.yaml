@@ -129,10 +129,7 @@ jobs:
               -e GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json \
               -e URGENCY_CLASSIFIER="llm_entailment_classifier" \
               -e REDIS_HOST=redis://redis:6379 \
-              -e LANGFUSE=True \
-              -e LANGFUSE_SECRET_KEY="${{ steps.secrets.outputs.langfuse-secret-key }}" \
-              -e LANGFUSE_PUBLIC_KEY="${{ steps.secrets.outputs.langfuse-public-key }}" \
-              -e BACKEND_ROOT_PATH=/api \
+              -e LANGFUSE=False \
               ${{ env.REPO }}/core_backend:latest
             docker system prune -f || true
 
