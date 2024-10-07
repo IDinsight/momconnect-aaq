@@ -127,7 +127,7 @@ jobs:
               -e ADMIN_PASSWORD="${{ steps.secrets.outputs.admin-password }}" \
               -e ADMIN_API_KEY="${{ steps.secrets.outputs.admin-api-key }}" \
               -e PROMETHEUS_MULTIPROC_DIR=/tmp \
-              -e LITELLM_ENDPOINT="${{ steps.secrets.outputs.admin-api-key }}" \
+              -e LITELLM_ENDPOINT="${{ steps.secrets.outputs.litellm-endpoint }}" \
               -e LITELLM_API_KEY="${{ steps.secrets.outputs.litellm-api-key }}" \
               -e GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json \
               -e URGENCY_CLASSIFIER="llm_entailment_classifier" \
