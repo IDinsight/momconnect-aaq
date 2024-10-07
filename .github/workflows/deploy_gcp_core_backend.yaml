@@ -70,6 +70,8 @@ jobs:
             admin-password:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-password
             admin-api-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-admin-api-key
             gcp-credential-json:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-gcp-credential-json
+            litellm-endpoint:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-litellm-endpoint
+            litellm-api-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-litellm-api-key
 
       - name: Copy GCP credentials JSON
         working-directory: deployment/docker-compose
@@ -125,7 +127,8 @@ jobs:
               -e ADMIN_PASSWORD="${{ steps.secrets.outputs.admin-password }}" \
               -e ADMIN_API_KEY="${{ steps.secrets.outputs.admin-api-key }}" \
               -e PROMETHEUS_MULTIPROC_DIR=/tmp \
-              -e LITELLM_ENDPOINT=http://litellm_proxy:4000 \
+              -e LITELLM_ENDPOINT="${{ steps.secrets.outputs.admin-api-key }}" \
+              -e LITELLM_API_KEY="${{ steps.secrets.outputs.litellm-api-key }}" \
               -e GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json \
               -e URGENCY_CLASSIFIER="llm_entailment_classifier" \
               -e REDIS_HOST=redis://redis:6379 \
