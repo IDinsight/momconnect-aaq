@@ -7,6 +7,7 @@ from io import BytesIO
 from typing import Tuple
 
 from fastapi import APIRouter, Depends, status
+from fastapi.exceptions import HTTPException
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
@@ -55,6 +56,7 @@ from .schemas import (
     ResponseFeedbackBase,
 )
 from .speech_components.external_voice_components import transcribe_audio
+from .utils import is_gibberish
 
 logger = setup_logger()
 
@@ -88,12 +90,33 @@ async def search(
     asession: AsyncSession = Depends(get_async_session),
     user_db: UserDB = Depends(authenticate_key),
 ) -> QueryResponse | JSONResponse:
-    """
-    Search endpoint finds the most similar content to the user query and optionally
+    """Search endpoint finds the most similar content to the user query and optionally
     generates a single-turn LLM response.
 
     If any guardrails fail, the embeddings search is still done and an error 400 is
     returned that includes the search results as well as the details of the failure.
+
+    Parameters
+    ----------
+    user_query
+        QueryBase object containing the user query and metadata.
+    request
+        FastAPI request object.
+    asession
+        AsyncSession object for database transactions.
+    user_db
+        UserDB object containing the user's metadata.
+
+    Returns
+    -------
+    QueryResponse | JSONResponse
+        QueryResponse object containing the search results and LLM response, or a
+        JSONResponse object containing an error message.
+
+    Raises
+    ------
+    HTTPException
+        If gibberish text is detected in the user query.
     """
 
     (
@@ -106,6 +129,12 @@ async def search(
         asession=asession,
         generate_tts=False,
     )
+    if is_gibberish(text=user_query_refined_template.query_text):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Gibberish text detected: {user_query_refined_template.query_text}",
+        )
+
     response = await get_search_response(
         query_refined=user_query_refined_template,
         response=response_template,

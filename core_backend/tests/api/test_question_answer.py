@@ -503,6 +503,20 @@ class TestGenerateResponse:
                 # user2 should not have any content
                 assert len(all_retireved_content_ids) == 0
 
+    def test_gibberish_text(self, api_key_user1: str, client: TestClient) -> None:
+        response = client.post(
+            "/search",
+            json={"query_text": "asdfv2 ads"},
+            headers={"Authorization": f"Bearer {api_key_user1}"},
+        )
+        assert response.status_code == 400
+        response = client.post(
+            "/search",
+            json={"query_text": "how do i get rid of this back pain?"},
+            headers={"Authorization": f"Bearer {api_key_user1}"},
+        )
+        assert response.status_code == 200
+
 
 class TestSTTResponse:
     @pytest.mark.parametrize(
