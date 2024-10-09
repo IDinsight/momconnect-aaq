@@ -3,7 +3,9 @@ endpoints.
 """
 
 import os
+import pickle
 from io import BytesIO
+from pathlib import Path
 from typing import Tuple
 
 from fastapi import APIRouter, Depends, status
@@ -73,6 +75,8 @@ router = APIRouter(
     tags=[TAG_METADATA["name"]],
 )
 
+gibberish_model = pickle.load(open(Path(__file__).parent / "gibberish_model.pkl", "rb"))
+
 
 @router.post(
     "/search",
@@ -129,7 +133,9 @@ async def search(
         asession=asession,
         generate_tts=False,
     )
-    if is_gibberish(text=user_query_refined_template.query_text):
+    if is_gibberish(
+        gibberish_model=gibberish_model, text=user_query_refined_template.query_text
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Gibberish text detected: {user_query_refined_template.query_text}",

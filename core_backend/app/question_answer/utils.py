@@ -1,9 +1,7 @@
 """This module contains utility functions for the question-answering module."""
 
 import math
-import pickle
-from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from .schemas import QuerySearchResult
 
@@ -107,14 +105,13 @@ def extract_ngrams(*, accepted_chars: str, n: int, line: str) -> list[str]:
     return ngrams
 
 
-def is_gibberish(*, model_fp: Optional[str | Path] = None, text: str) -> bool:
+def is_gibberish(*, gibberish_model: Any, text: str) -> bool:
     """Detect if the given text is gibberish.
 
     Parameters
     ----------
-    model_fp
-        The filepath to the gibberish model. If not specified, the default model path
-        is the `gibberish_model.pkl` file in the same directory as this module.
+    gibberish_model
+        The gibberish model to use for detecting gibberish.
     text
         The text to detect gibberish for.
 
@@ -131,10 +128,6 @@ def is_gibberish(*, model_fp: Optional[str | Path] = None, text: str) -> bool:
 
     if not text:  # Assume empty string is gibberish
         return True
-    model_fp = Path(model_fp or Path(__file__).parent / "gibberish_model.pkl")
-    if not Path.is_file(model_fp):
-        raise FileNotFoundError(f"Gibberish model file not found at: {model_fp}")
-    gibberish_model = pickle.load(open(model_fp, "rb"))
     transition_prob = calculate_avg_transition_prob(
         accepted_chars=gibberish_model["accepted_chars"],
         line=text,
