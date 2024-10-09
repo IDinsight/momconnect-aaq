@@ -40,3 +40,11 @@ jobs:
             --title="${{ github.ref_name }}" \
             --update-aliases ${{ github.ref_name }} latest
           mike set-default latest --allow-undefined --push
+
+      - name: Add CNAME
+        run: |
+          git switch gh-pages
+          echo "docs.ask-a-question.com" >> CNAME
+          git add CNAME
+          git commit -m "Add CNAME"
+          git push -f origin gh-pages

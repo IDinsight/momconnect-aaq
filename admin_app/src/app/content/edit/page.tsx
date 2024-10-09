@@ -2,7 +2,6 @@
 import { Layout } from "@/components/Layout";
 import { FullAccessComponent } from "@/components/ProtectedComponent";
 import { appColors, appStyles, sizes } from "@/utils";
-import { apiCalls } from "@/utils/api";
 import { useAuth } from "@/utils/auth";
 import { ChevronLeft, Delete } from "@mui/icons-material";
 import Autocomplete, { createFilterOptions } from "@mui/material/Autocomplete";
@@ -24,6 +23,14 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import {
+  createContent,
+  createTag,
+  deleteTag,
+  editContent,
+  getContent,
+  getTagList,
+} from "../api";
 
 export interface Content extends EditContentBody {
   content_id: number | null;
@@ -45,8 +52,7 @@ const AddEditContentPage = () => {
   const content_id = Number(searchParams.get("content_id")) || null;
   const [content, setContent] = React.useState<Content | null>(null);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
-  const [openDiscardChangesModal, setOpenDiscardChangesModal] =
-    React.useState(false);
+  const [openDiscardChangesModal, setOpenDiscardChangesModal] = React.useState(false);
 
   const [isSaved, setIsSaved] = React.useState(true);
 
@@ -58,7 +64,7 @@ const AddEditContentPage = () => {
       setIsLoading(false);
       return;
     } else {
-      apiCalls.getContent(content_id, token!).then((data) => {
+      getContent(content_id, token!).then((data) => {
         setContent(data);
         setIsLoading(false);
       });
@@ -93,22 +99,19 @@ const AddEditContentPage = () => {
             isSaved ? router.push("/content") : setOpenDiscardChangesModal(true)
           }
         />
-        <Layout.FlexBox
-          flexDirection={"column"}
-          sx={{ px: sizes.doubleBaseGap, mx: sizes.smallGap }}
-        >
+        <Layout.FlexBox flexDirection={"column"}>
           <Layout.Spacer multiplier={2} />
           <ContentBox
             content={content}
             setContent={setContent}
             getTagList={() => {
-              return apiCalls.getTagList(token!);
+              return getTagList(token!);
             }}
             addTag={(tag: string) => {
-              return apiCalls.createTag(tag, token!);
+              return createTag(tag, token!);
             }}
             deleteTag={(tag_id: number) => {
-              return apiCalls.deleteTag(tag_id, token!);
+              return deleteTag(tag_id, token!);
             }}
             isSaved={isSaved}
             setIsSaved={setIsSaved}
@@ -161,9 +164,12 @@ const ContentBox = ({
 
   const { token } = useAuth();
   const [inputVal, setInputVal] = React.useState<string>("");
-  const [highlightedOption, setHighlightedOption] =
-    React.useState<Tag | null>();
+  const [highlightedOption, setHighlightedOption] = React.useState<Tag | null>();
   const [isSaving, setIsSaving] = React.useState(false);
+
+  const setMainPageSnackMessage = (message: string): void => {
+    localStorage.setItem("editPageSnackMessage", message);
+  };
 
   const router = useRouter();
   React.useEffect(() => {
@@ -177,9 +183,7 @@ const ContentBox = ({
                 data.find((tag) => tag.tag_id === tag_id),
               )
             : [];
-        setContentTags(
-          defaultTags.filter((tag): tag is Tag => tag !== undefined),
-        );
+        setContentTags(defaultTags.filter((tag): tag is Tag => tag !== undefined));
         setAvailableTags(data.filter((tag) => !defaultTags.includes(tag)));
       } catch (error) {
         console.error("Failed to fetch tags:", error);
@@ -188,6 +192,7 @@ const ContentBox = ({
 
     fetchTags();
   }, [refreshKey]);
+
   const saveContent = async (content: Content): Promise<number | null> => {
     setIsSaving(true);
 
@@ -201,8 +206,8 @@ const ContentBox = ({
     try {
       const result =
         content.content_id === null
-          ? await apiCalls.createContent(body, token!)
-          : await apiCalls.editContent(content.content_id, body, token!);
+          ? await createContent(body, token!)
+          : await editContent(content.content_id, body, token!);
       setIsSaved(true);
       setSaveError(false);
       return result.content_id;
@@ -222,6 +227,19 @@ const ContentBox = ({
       setIsSaving(false);
     }
   };
+
+  const handleSaveContent = async (content: Content) => {
+    const content_id = await saveContent(content);
+    if (content_id) {
+      {
+        content.content_id
+          ? setMainPageSnackMessage("Content edited successfully")
+          : setMainPageSnackMessage("Content created successfully");
+      }
+      router.push(`/content`);
+    }
+  };
+
   function createEmptyContent(contentTags: Tag[]): Content {
     return {
       content_id: null,
@@ -235,6 +253,7 @@ const ContentBox = ({
       content_metadata: {},
     };
   }
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     key: keyof Content,
@@ -249,6 +268,7 @@ const ContentBox = ({
       : setContent({ ...emptyContent, [key]: e.target.value });
     setIsSaved(false);
   };
+
   const handleTagsChange = (updatedTags: Tag[]) => {
     setContentTags(updatedTags);
     setIsSaved(false);
@@ -279,6 +299,7 @@ const ContentBox = ({
       setSnackMessage(`Tag "${tag}" already exists`);
     }
   };
+
   const openDeleteConfirmModal = (tag: Tag) => {
     setTagToDelete(tag);
     setOpenDeleteModal(true);
@@ -296,6 +317,7 @@ const ContentBox = ({
       });
     }
   };
+
   return (
     <Layout.FlexBox>
       <Dialog
@@ -309,8 +331,8 @@ const ContentBox = ({
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="confirm-delete-dialog-description">
-            This tag will be removed from all contents and will no longer be an
-            option. This action cannot be undone.
+            This tag will be removed from all contents and will no longer be an option.
+            This action cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ marginBottom: 1, marginRight: 1 }}>
@@ -331,8 +353,8 @@ const ContentBox = ({
       <Layout.Spacer />
       <Layout.FlexBox
         sx={{
-          maxWidth: "800px",
-          minWidth: "300px",
+          maxWidth: "md",
+          minWidth: "sm",
           border: 0.5,
           borderColor: appColors.outline,
           borderRadius: 2,
@@ -407,12 +429,10 @@ const ContentBox = ({
                     event.key === "Enter" &&
                     inputVal &&
                     !availableTags.some(
-                      (tag) =>
-                        tag.tag_name.toUpperCase() === inputVal.toUpperCase(),
+                      (tag) => tag.tag_name.toUpperCase() === inputVal.toUpperCase(),
                     ) &&
                     !contentTags.some(
-                      (tag) =>
-                        tag.tag_name.toUpperCase() === inputVal.toUpperCase(),
+                      (tag) => tag.tag_name.toUpperCase() === inputVal.toUpperCase(),
                     )
                   ) {
                     event.preventDefault();
@@ -453,20 +473,15 @@ const ContentBox = ({
             if (
               option.tag_name &&
               !availableTags.some(
-                (tag) =>
-                  tag.tag_name.toUpperCase() === option.tag_name.toUpperCase(),
+                (tag) => tag.tag_name.toUpperCase() === option.tag_name.toUpperCase(),
               ) &&
               !contentTags.some(
-                (tag) =>
-                  tag.tag_name.toUpperCase() === option.tag_name.toUpperCase(),
+                (tag) => tag.tag_name.toUpperCase() === option.tag_name.toUpperCase(),
               )
             ) {
               return (
                 <li key={key} {...rest}>
-                  <Button
-                    fullWidth
-                    onClick={() => handleNewTag(option.tag_name)}
-                  >
+                  <Button fullWidth onClick={() => handleNewTag(option.tag_name)}>
                     {option.tag_name}
                   </Button>
                 </li>
@@ -492,16 +507,13 @@ const ContentBox = ({
               </li>
             );
           }}
-          sx={{ width: "500px" }}
+          sx={{ maxWidth: "500px" }}
           isOptionEqualToValue={(option, value) =>
             value.tag_name === option.tag_name || value.tag_name === ""
           }
         />
         <Layout.Spacer multiplier={1.5} />
-        <Layout.FlexBox
-          flexDirection="row"
-          sx={{ justifyContent: "space-between" }}
-        >
+        <Layout.FlexBox flexDirection="row" sx={{ justifyContent: "space-between" }}>
           <LoadingButton
             variant="contained"
             disabled={isSaved}
@@ -517,15 +529,6 @@ const ContentBox = ({
               } else if (content.content_text === "") {
                 setIsContentEmpty(true);
               } else {
-                const handleSaveContent = async (content: Content) => {
-                  const content_id = await saveContent(content);
-                  if (content_id) {
-                    const actionType = content.content_id ? "edit" : "add";
-                    router.push(
-                      `/content/?content_id=${content_id}&action=${actionType}`,
-                    );
-                  }
-                };
                 handleSaveContent(content);
               }
             }}
@@ -607,9 +610,7 @@ const DiscardChangesModal = ({
       aria-labelledby="alert-dialog-discard-change-title"
       aria-describedby="alert-dialog-discard-change-description"
     >
-      <DialogTitle id="alert-dialog-discard-change-title">
-        Discard Changes
-      </DialogTitle>
+      <DialogTitle id="alert-dialog-discard-change-title">Discard Changes</DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-discard-change-description">
           You have unsaved changes. Are you sure you want to discard them?

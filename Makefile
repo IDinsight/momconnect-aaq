@@ -10,6 +10,8 @@ clean:
 	find . -type f -name "*.py[co]" -delete
 	find . -type d -name "__pycache__" -delete
 	find . -type d -name ".pytest_cache" -exec rm -rf {} +
+	find . -type d -name ".mypy_cache" -exec rm -rf {} +
+	find . -type d -name ".ruff_cache" -exec rm -rf {} +
 
 # Note: Run `make fresh-env psycopg2-binary=true` to manually replace psycopg with psycopg2-binary
 fresh-env :
@@ -32,6 +34,8 @@ setup-dev: setup-db setup-redis add-users-to-db setup-embeddings-arm
 teardown-dev: teardown-db teardown-redis teardown-embeddings
 
 ## Helper targets
+guard-%:
+	@if [ -z '${${*}}' ]; then echo 'ERROR: environment variable $* not set' && exit 1; fi
 
 # Add users to db
 add-users-to-db:
@@ -106,7 +110,7 @@ build-embeddings-arm:
 	@cd ..
 	@rm -rf text-embeddings-inference
 
-setup-embeddings-arm:
+setup-embeddings-arm: guard-HUGGINGFACE_MODEL guard-HUGGINGFACE_EMBEDDINGS_API_KEY
 	-@docker stop huggingface-embeddings
 	-@docker rm huggingface-embeddings
 	@docker system prune -f
@@ -119,7 +123,7 @@ setup-embeddings-arm:
         --model-id $(HUGGINGFACE_MODEL) \
         --api-key $(LITELLM_API_KEY)
 
-setup-embeddings:
+setup-embeddings: guard-HUGGINGFACE_MODEL guard-HUGGINGFACE_EMBEDDINGS_API_KEY
 	-@docker stop huggingface-embeddings
 	-@docker rm huggingface-embeddings
 	@docker system prune -f

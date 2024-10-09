@@ -121,9 +121,9 @@ def _process_identified_language_response(
 
         error_response = QueryResponseError(
             query_id=response.query_id,
+            session_id=response.session_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=response.llm_response,
-            tts_file=response.tts_file,
             search_results=response.search_results,
             debug_info=response.debug_info,
             error_message=error_message,
@@ -207,9 +207,9 @@ async def _translate_question(
     else:
         error_response = QueryResponseError(
             query_id=response.query_id,
+            session_id=response.session_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=response.llm_response,
-            tts_file=response.tts_file,
             search_results=response.search_results,
             debug_info=response.debug_info,
             error_message="Unable to translate",
@@ -277,9 +277,9 @@ async def _classify_safety(
     else:
         error_response = QueryResponseError(
             query_id=response.query_id,
+            session_id=response.session_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=response.llm_response,
-            tts_file=response.tts_file,
             search_results=response.search_results,
             debug_info=response.debug_info,
             error_message=f"{safety_classification.value.lower()} found.",
@@ -355,9 +355,9 @@ async def _paraphrase_question(
     else:
         error_response = QueryResponseError(
             query_id=response.query_id,
+            session_id=response.session_id,
             feedback_secret_key=response.feedback_secret_key,
             llm_response=response.llm_response,
-            tts_file=response.tts_file,
             search_results=response.search_results,
             debug_info=response.debug_info,
             error_message="Unable to paraphrase the query.",

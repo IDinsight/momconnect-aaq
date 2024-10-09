@@ -2,7 +2,6 @@
 import logowhite from "@/logo-light.png";
 import { appColors, appStyles, sizes } from "@/utils";
 import { useAuth } from "@/utils/auth";
-import ArrowDropDown from "@mui/icons-material/ArrowDropDown";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Box, Button } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
@@ -15,20 +14,12 @@ import Typography from "@mui/material/Typography";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
-import { useState } from "react";
-import { Layout } from "./Layout";
+import { useEffect } from "react";
 
-interface Page {
-  title: string;
-  path: string;
-}
-
-const smallScreenNavMenuPages = [
-  { title: "Manage Content", path: "/content" },
-  { title: "Manage Urgency Rules", path: "/urgency-rules" },
-  { title: "Test", path: "/playground" },
-  { title: "Integrate", path: "/integrations" },
-  { title: "Dashboard", path: "/dashboard" },
+const pageDict = [
+  { title: "Question Answering", path: "/content" },
+  { title: "Urgency Detection", path: "/urgency-rules" },
+  { title: "Integrations", path: "/integrations" },
 ];
 
 const settings = ["Logout"];
@@ -47,10 +38,8 @@ const NavBar = () => {
         appStyles.alignItemsCenter,
       ]}
     >
-      <Logo />
       <SmallScreenNavMenu />
       <LargeScreenNavMenu />
-      <Layout.Spacer horizontal multiplier={1.5} />
       <UserDropdown />
     </AppBar>
   );
@@ -65,7 +54,7 @@ const Logo = () => {
         sx={{
           height: 36,
           aspect_ratio: 1200 / 214,
-          display: { xs: "none", md: "block" },
+          paddingTop: 0.3,
         }}
       />
     </Link>
@@ -74,11 +63,21 @@ const Logo = () => {
 
 const SmallScreenNavMenu = () => {
   const pathname = usePathname();
-  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
-    null,
-  );
+  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
+
+  const smallMenuPageDict = [...pageDict, { title: "Dashboard", path: "/dashboard" }];
+
   return (
-    <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
+    <Box
+      alignItems="center"
+      gap={1.5}
+      paddingRight={1.5}
+      sx={{
+        height: sizes.navbar,
+        flexGrow: 1,
+        display: { xs: "flex", md: "none" },
+      }}
+    >
       <IconButton
         size="large"
         aria-label="account of current user"
@@ -91,6 +90,7 @@ const SmallScreenNavMenu = () => {
       >
         <MenuIcon />
       </IconButton>
+      <Logo />
       <Menu
         id="menu-appbar"
         anchorEl={anchorElNav}
@@ -116,7 +116,7 @@ const SmallScreenNavMenu = () => {
           },
         }}
       >
-        {smallScreenNavMenuPages.map((page) => (
+        {smallMenuPageDict.map((page) => (
           <Link
             href={page.path}
             key={page.title}
@@ -127,10 +127,7 @@ const SmallScreenNavMenu = () => {
               key={page.title}
               onClick={() => setAnchorElNav(null)}
               sx={{
-                color:
-                  pathname === page.path
-                    ? appColors.white
-                    : appColors.secondary,
+                color: pathname === page.path ? appColors.white : appColors.secondary,
               }}
             >
               {page.title}
@@ -146,128 +143,58 @@ const LargeScreenNavMenu = () => {
   const pathname = usePathname();
   const router = useRouter();
 
-  type stringToStringDictType = {
-    [key: string]: string;
-  };
-  const pathToPageNameMap: stringToStringDictType = {
-    "/urgency-rules": "Manage Urgency Rules",
-    "/content": "Manage Content",
-  };
-
-  const staticPages = [
-    { title: "Test", path: "/playground" },
-    { title: "Integrate", path: "/integrations" },
-  ];
-
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [selectedOption, setSelectedOption] = React.useState<string>(
-    pathToPageNameMap[pathname] || "Manage",
-  );
-
-  const handleConfigureClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleConfigureClose = (page: Page | null) => {
-    setAnchorEl(null);
-    if (page) {
-      router.push(`/${page.path}`);
-    }
-  };
-
   return (
     <Box
-      justifyContent="flex-end"
+      justifyContent="space-between"
       alignItems="center"
-      sx={{ flexGrow: 1, display: { xs: "none", md: "flex", gap: 15 } }}
+      sx={{
+        height: sizes.navbar,
+        flexGrow: 1,
+        display: { xs: "none", md: "flex" },
+      }}
+      paddingLeft={0.5}
+      paddingRight={1.5}
     >
-      <Typography
-        onClick={handleConfigureClick}
-        sx={{
-          color:
-            pathname === "/content" || pathname === "/urgency-rules"
-              ? appColors.white
-              : appColors.outline,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-        }}
+      <Logo />
+      <Box
+        justifyContent="flex-end"
+        alignItems="center"
+        sx={{ flexGrow: 1, display: "flex", gap: 0.5 }}
       >
-        {selectedOption} <ArrowDropDown />
-      </Typography>
-      <Menu
-        id="simple-menu"
-        anchorEl={anchorEl}
-        keepMounted
-        open={Boolean(anchorEl)}
-        onClose={() => handleConfigureClose(null)}
-        sx={{
-          marginTop: "14px",
-          "& .MuiPaper-root": {
-            backgroundColor: appColors.primary,
-            color: "white",
-          },
-          "& .Mui-selected, & .MuiMenuItem-root:hover": {
-            backgroundColor: appColors.deeperPrimary,
-          },
-        }}
-      >
-        <MenuItem
-          onClick={() =>
-            handleConfigureClose({
-              title: "Manage Content",
-              path: "content",
-            })
-          }
-          style={{ color: "white" }}
-        >
-          Manage Content
-        </MenuItem>
-        <MenuItem
-          onClick={() =>
-            handleConfigureClose({
-              title: "Manage Urgency Rules",
-              path: "urgency-rules",
-            })
-          }
-        >
-          Manage Urgency Rules
-        </MenuItem>
-      </Menu>
-      {staticPages.map((page) => (
-        <Link
-          href={page.path}
-          key={page.title}
-          passHref
-          style={{ textDecoration: "none" }}
-        >
-          <Typography
+        {pageDict.map((page) => (
+          <Link
+            href={page.path}
             key={page.title}
-            sx={{
-              margin: sizes.baseGap,
-              color:
-                pathname === page.path ? appColors.white : appColors.outline,
-            }}
+            passHref
+            style={{ textDecoration: "none" }}
           >
-            {page.title}
-          </Typography>
-        </Link>
-      ))}
-      <Button
-        variant="outlined"
-        onClick={() => router.push("/dashboard")}
-        style={{
-          color:
-            pathname === "/dashboard" ? appColors.white : appColors.outline,
-          borderColor:
-            pathname === "/dashboard" ? appColors.white : appColors.outline,
-          maxHeight: "30px",
-          marginInline: 5,
-        }}
-      >
-        Dashboard
-      </Button>
+            <Typography
+              key={page.title}
+              sx={{
+                margin: sizes.baseGap,
+                color: pathname === page.path ? appColors.white : appColors.outline,
+              }}
+            >
+              {page.title}
+            </Typography>
+          </Link>
+        ))}
+        <Button
+          variant="outlined"
+          onClick={() => router.push("/dashboard")}
+          style={{
+            color: pathname === "/dashboard" ? appColors.white : appColors.outline,
+            borderColor:
+              pathname === "/dashboard" ? appColors.white : appColors.outline,
+            maxHeight: "30px",
+            width: "110px",
+            marginLeft: 4,
+            marginRight: 8,
+          }}
+        >
+          Dashboard
+        </Button>
+      </Box>
     </Box>
   );
 };
@@ -275,9 +202,23 @@ const LargeScreenNavMenu = () => {
 const UserDropdown = () => {
   const { logout, user } = useAuth();
   const router = useRouter();
-  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
-    null,
-  );
+  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
+  const [persistedUser, setPersistedUser] = React.useState<string | null>(null);
+
+  useEffect(() => {
+    // Save user to local storage when it changes
+    if (user) {
+      localStorage.setItem("user", user);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    // Retrieve user from local storage on component mount
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setPersistedUser(storedUser);
+    }
+  }, []);
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElUser(event.currentTarget);
@@ -311,16 +252,14 @@ const UserDropdown = () => {
           horizontal: "right",
         }}
         open={Boolean(anchorElUser)}
-        onClose={() => setAnchorElUser(null)}
+        onClose={handleCloseUserMenu}
       >
         <MenuItem disabled>
-          <Typography textAlign="center">{user}</Typography>
+          <Typography textAlign="center">{persistedUser}</Typography>
         </MenuItem>
-        {settings.map((setting) => (
-          <MenuItem key={setting} onClick={logout}>
-            <Typography textAlign="center">{setting}</Typography>
-          </MenuItem>
-        ))}
+        <MenuItem key={"logout"} onClick={logout}>
+          <Typography textAlign="center">Logout</Typography>
+        </MenuItem>
       </Menu>
     </Box>
   );
