@@ -7,6 +7,7 @@ category:
   - API
 date: 2024-01-12
 ---
+
 # No more hallucinations
 
 Last week we rolled out another safety feature - checking consistency of the response
@@ -38,7 +39,6 @@ We can use GPT4-turbo and it does remarkably well on our test data. But there
 may be reasons - from data governance and privacy rules to costs - for not sending the data
 to OpenAI. One option is to use your own
 [locally hosted LLM]("../../components/self_hosted_llms/index.md").
-
 
 ## Doc references
 

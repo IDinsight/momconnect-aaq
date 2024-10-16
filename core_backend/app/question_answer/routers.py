@@ -24,7 +24,6 @@ from ..contents.models import (
 )
 from ..database import get_async_session
 from ..llm_call.process_output import (
-    check_align_score__after,
     generate_llm_query_response,
     generate_tts__after,
 )
@@ -454,7 +453,6 @@ def rerank_search_results(
 
 
 @generate_tts__after
-@check_align_score__after
 async def get_generation_response(
     query_refined: QueryRefined,
     response: QueryResponse,
