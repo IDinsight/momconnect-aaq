@@ -105,18 +105,21 @@ const TestSidebar = ({
           justifyContent={showLLMResponseToggle ? "space-between" : "flex-end"}
           paddingTop={2}
         >
-          {/* {showLLMResponseToggle && (
+          {showLLMResponseToggle && (
             <FormControlLabel
               control={
                 <Checkbox
                   checked={generateLLMResponse}
                   onChange={toggleGenerateLLMResponse}
-                  sx={{ color: "#5480D1", "&.Mui-checked": { color: "#5480D1" } }}
+                  sx={{
+                    color: "#5480D1",
+                    "&.Mui-checked": { color: "#5480D1" },
+                  }}
                 />
               }
               label="Also generate AI response"
             />
-          )} */}
+          )}
           <IconButton
             onClick={() =>
               handleSendClick(
