@@ -30,7 +30,7 @@ fresh-env :
 	fi
 
 # Dev requirements
-setup-dev: setup-db setup-redis #setup-embeddings-arm
+setup-dev: setup-db setup-redis setup-embeddings-arm
 teardown-dev: teardown-db teardown-redis teardown-embeddings
 
 ## Helper targets
