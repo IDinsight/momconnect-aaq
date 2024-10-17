@@ -231,11 +231,11 @@ async def is_username_valid(
         return True
 
 
-async def get_number_of_users(asession: AsyncSession) -> int:
+async def get_number_of_admin_users(asession: AsyncSession) -> int:
     """
     Retrieves the number of users in the database
     """
-    stmt = select(UserDB)
+    stmt = select(UserDB).where(UserDB.is_admin is True)
     result = await asession.execute(stmt)
     users = result.scalars().all()
     return len(users)
