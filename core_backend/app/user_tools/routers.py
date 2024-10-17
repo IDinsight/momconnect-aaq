@@ -12,7 +12,7 @@ from ..users.models import (
     UserAlreadyExistsError,
     UserDB,
     UserNotFoundError,
-    get_number_of_users,
+    get_number_of_admin_users,
     get_user_by_id,
     get_user_by_username,
     is_username_valid,
@@ -73,10 +73,10 @@ async def create_first_user(
     Create first admin user when there are no users in the DB.
     """
 
-    nb_users = await get_number_of_users(asession)
+    nb_users = await get_number_of_admin_users(asession)
     if nb_users > 0:
         raise HTTPException(
-            status_code=400, detail="There are already users in the database."
+            status_code=400, detail="There are already admin users in the database."
         )
 
     user.is_admin = True
@@ -126,7 +126,7 @@ async def is_register_required(
     Check it there are any users in the database.
     If there are no users, registration is required
     """
-    nb_users = await get_number_of_users(asession)
+    nb_users = await get_number_of_admin_users(asession)
     if nb_users > 0:
         require_register = False
     else:
