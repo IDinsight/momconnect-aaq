@@ -130,7 +130,7 @@ jobs:
               -e LITELLM_ENDPOINT="${{ steps.secrets.outputs.litellm-endpoint }}" \
               -e LITELLM_API_KEY="${{ steps.secrets.outputs.litellm-api-key }}" \
               -e GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json \
-              -e URGENCY_CLASSIFIER="llm_entailment_classifier" \
+              -e URGENCY_CLASSIFIER="cosine_distance_classifier" \
               -e REDIS_HOST=redis://redis:6379 \
               -e LANGFUSE=False \
               ${{ env.REPO }}/core_backend:latest
