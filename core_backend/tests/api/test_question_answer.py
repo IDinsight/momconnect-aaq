@@ -503,19 +503,44 @@ class TestGenerateResponse:
                 # user2 should not have any content
                 assert len(all_retireved_content_ids) == 0
 
-    def test_gibberish_text(self, api_key_user1: str, client: TestClient) -> None:
+    @pytest.mark.parametrize(
+        "query_text, status_code",
+        [
+            ("how do i get rid of this back pain?", 200),
+            ("hello world", 200),
+            ("hello world!", 200),
+            ("This is a test!!!", 200),
+            ("supercalifragilisticexpialidocious", 200),
+            ("normal text", 200),
+            ("is this gibberish?", 200),
+            ("i have a backache", 200),
+            (" h e l l o ", 200),
+            ("!@#$!@", 400),
+            ("!!!!????", 400),
+            ("12345", 400),
+            ("R2D2 & C3PO", 400),
+            ("h3ll0 w0rld", 400),
+            ("thequickbrownfox", 400),
+            ("asdfasdfasdf", 400),
+            ("zxcvwerjasc", 400),
+            ("nmnjcviburili,<>", 400),
+            ("zxcvnadtruqe", 400),
+            ("ertrjiloifdfyyoiu", 400),
+            ("grty iuewdiivjh", 400),
+            ("@&$+_", 400),
+            ("hfnoseth", 400),
+            ("asdfads", 400),
+        ],
+    )
+    def test_gibberish_text(
+        self, api_key_user1: str, client: TestClient, query_text: str, status_code: int
+    ) -> None:
         response = client.post(
             "/search",
-            json={"query_text": "asdfv2 ads"},
+            json={"query_text": query_text},
             headers={"Authorization": f"Bearer {api_key_user1}"},
         )
-        assert response.status_code == 400
-        response = client.post(
-            "/search",
-            json={"query_text": "how do i get rid of this back pain?"},
-            headers={"Authorization": f"Bearer {api_key_user1}"},
-        )
-        assert response.status_code == 200
+        assert response.status_code == status_code
 
 
 class TestSTTResponse:
