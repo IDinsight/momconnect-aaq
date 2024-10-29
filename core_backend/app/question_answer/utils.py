@@ -108,6 +108,9 @@ def extract_ngrams(*, accepted_chars: str, n: int, line: str) -> list[str]:
 def is_gibberish(*, gibberish_model: Any, text: str) -> bool:
     """Detect if the given text is gibberish.
 
+    NB: Empty strings, strings containing only digits, and strings containing only
+    symbols are considered gibberish.
+
     Parameters
     ----------
     gibberish_model
@@ -126,7 +129,8 @@ def is_gibberish(*, gibberish_model: Any, text: str) -> bool:
         If the gibberish model file is not found at the specified path.
     """
 
-    if not text:  # Assume empty string is gibberish
+    text = text.strip()
+    if not text or all(not c.isalnum() for c in text) or text.isdigit():
         return True
     transition_prob = calculate_avg_transition_prob(
         accepted_chars=gibberish_model["accepted_chars"],
