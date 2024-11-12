@@ -38,14 +38,14 @@ jobs:
         with:
           registry-type: public
 
-      - name: Build and push Speech api
+      - name: Build and push Core Backend
         uses: docker/build-push-action@v5
         env:
           REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
           REGISTRY_ALIAS: j3r7b4k0
-          REPOSITORY: momconnect-aaq/core_backend
+          REPOSITORY: momconnect-aaq/speech_api
         with:
-          context: core_backend/
+          context: optional_components/speech_api/
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
