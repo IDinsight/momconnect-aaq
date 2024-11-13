@@ -1,8 +1,7 @@
 name: Build and Push Images speech api
 on:
-  push:
-    branches:
-      - build-speech-api
+  release:
+    types: [released]
   workflow_dispatch:
 permissions:
   id-token: write # This is required for requesting the JWT
