@@ -1,8 +1,8 @@
-name: Build and Push Images core backend
+name: Build and Push Images speech api
 on:
   release:
     types: [released]
-
+  workflow_dispatch:
 permissions:
   id-token: write # This is required for requesting the JWT
   contents: read # This is required for actions/checkout
@@ -38,14 +38,14 @@ jobs:
         with:
           registry-type: public
 
-      - name: Build and push Core Backend
+      - name: Build and push Speech api
         uses: docker/build-push-action@v5
         env:
           REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
           REGISTRY_ALIAS: j3r7b4k0
-          REPOSITORY: momconnect-aaq/core_backend
+          REPOSITORY: momconnect-aaq/speech_api
         with:
-          context: core_backend/
+          context: optional_components/speech_api/
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
