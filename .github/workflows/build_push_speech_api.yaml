@@ -39,7 +39,7 @@ jobs:
         with:
           registry-type: public
 
-      - name: Build and push Core Backend
+      - name: Build and push Speech api
         uses: docker/build-push-action@v5
         env:
           REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
