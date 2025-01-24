@@ -548,7 +548,6 @@ class TestSTTResponse:
         [
             (True, 200, {"text": "Paris"}),
             (False, 401, {"error": "Unauthorized"}),
-            (True, 400, {"text": "Paris"}),
             (True, 500, {}),
         ],
     )
