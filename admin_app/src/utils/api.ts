@@ -27,28 +27,6 @@ api.interceptors.response.use(
   },
 );
 
-const getUser = async (token: string) => {
-  try {
-    const response = await api.get("/user/", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    throw new Error("Error fetching user info");
-  }
-};
-
-const getRegisterOption = async () => {
-  try {
-    const response = await api.get("/user/require-register");
-    return response.data;
-  } catch (error) {
-    throw new Error("Error fetching register option");
-  }
-};
-
 const getLoginToken = async (username: string, password: string) => {
   const formData = new FormData();
   formData.append("username", username);
@@ -67,20 +45,6 @@ const getLoginToken = async (username: string, password: string) => {
   }
 };
 
-const registerUser = async (username: string, password: string) => {
-  try {
-    const response = await api.post(
-      "/user/register-first-user",
-      { username, password, is_admin: true },
-      {
-        headers: { "Content-Type": "application/json" },
-      },
-    );
-    return response.data;
-  } catch (error) {
-    console.error(error);
-  }
-};
 const getGoogleLoginToken = async (idToken: {
   client_id: string;
   credential: string;
@@ -123,6 +87,36 @@ const getSearch = async (
   }
 };
 
+const getChat = async (
+  question: string,
+  generate_llm_response: boolean,
+  token: string,
+  session_id?: number,
+): Promise<{ status: number; data?: any; error?: any }> => {
+  try {
+    const response = await api.post(
+      "/chat",
+      {
+        query_text: question,
+        generate_llm_response,
+        session_id,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+
+    return { status: response.status, ...response.data };
+  } catch (err) {
+    const error = err as AxiosError;
+    if (error.response) {
+      return { status: error.response.status, error: error.response.data };
+    } else {
+      console.error("Error returning chat response", error.message);
+      throw new Error(`Error returning chat response: ${error.message}`);
+    }
+  }
+};
 const postResponseFeedback = async (
   query_id: number,
   feedback_sentiment: string,
@@ -163,13 +157,11 @@ const getUrgencyDetection = async (search: string, token: string) => {
 };
 
 export const apiCalls = {
-  registerUser,
-  getUser,
   getLoginToken,
   getGoogleLoginToken,
   getSearch,
+  getChat,
   postResponseFeedback,
   getUrgencyDetection,
-  getRegisterOption,
 };
 export default api;

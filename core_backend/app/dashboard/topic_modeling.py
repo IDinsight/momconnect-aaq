@@ -14,7 +14,7 @@ from hdbscan import HDBSCAN
 from sentence_transformers import SentenceTransformer
 from umap import UMAP
 
-from ..llm_call.dashboard import generate_topic_label  # Adjust import as necessary
+from ..llm_call.dashboard import generate_topic_label
 from ..utils import setup_logger
 from .config import TOPIC_MODELING_CONTEXT
 from .schemas import BokehContentItem, Topic, TopicsData, UserQuery
@@ -48,21 +48,42 @@ async def topic_model_queries(
         A tuple containing TopicsData for the frontend and a DataFrame with embeddings.
     """
     if not query_data:
-        logger.info("No queries to cluster")
+        logger.warning("No queries to cluster")
         return (
             TopicsData(
-                refreshTimeStamp="",
+                status="error",
+                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
                 data=[],
+                error_message="No queries to cluster",
+                failure_step="Run topic modeling",
             ),
             pd.DataFrame(),
         )
 
     if not content_data:
-        logger.info("No content data to cluster")
+        logger.warning("No content data to cluster")
         return (
             TopicsData(
-                refreshTimeStamp="",
+                status="error",
+                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
                 data=[],
+                error_message="No content data to cluster",
+                failure_step="Run topic modeling",
+            ),
+            pd.DataFrame(),
+        )
+    n_queries = len(query_data)
+    n_contents = len(content_data)
+    if not sum([n_queries, n_contents]) >= 500:
+        logger.warning("Not enough data to cluster")
+        return (
+            TopicsData(
+                status="error",
+                refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
+                data=[],
+                error_message="""Not enough data to cluster.
+                Please provide at least 500 total queries and content items.""",
+                failure_step="Run topic modeling",
             ),
             pd.DataFrame(),
         )
@@ -271,6 +292,7 @@ def prepare_topics_data(
 
     # Prepare TopicsData
     topics_data = TopicsData(
+        status="completed",
         refreshTimeStamp=datetime.now(timezone.utc).isoformat(),
         data=topics_list,
     )

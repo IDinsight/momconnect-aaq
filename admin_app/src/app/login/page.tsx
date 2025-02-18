@@ -20,12 +20,14 @@ import Typography from "@mui/material/Typography";
 import * as React from "react";
 import { useEffect } from "react";
 import { appColors, sizes } from "@/utils";
-import { apiCalls } from "@/utils/api";
 import {
-  AdminAlertModal,
-  ConfirmationModal,
-  RegisterModal,
-} from "./components/RegisterModal";
+  getRegisterOption,
+  registerUser,
+  UserBody,
+  UserBodyPassword,
+} from "@/app/user-management/api";
+import { AdminAlertModal, RegisterModal } from "./components/RegisterModal";
+import { ConfirmationModal } from "@/app/user-management/components/ConfirmationModal";
 import { LoadingButton } from "@mui/lab";
 
 const NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID: string =
@@ -41,6 +43,13 @@ const Login = () => {
   const [isLoading, setIsLoading] = React.useState(true);
   const { login, loginGoogle, loginError } = useAuth();
   const [recoveryCodes, setRecoveryCodes] = React.useState<string[]>([]);
+  const [isRendered, setIsRendered] = React.useState<boolean>(false);
+  const signinDiv = React.useCallback((node: HTMLDivElement | null) => {
+    if (node !== null) {
+      setIsRendered(true);
+    }
+  }, []);
+
   const iconStyles = {
     color: appColors.white,
     width: { xs: "30%", lg: "40%" },
@@ -61,37 +70,39 @@ const Login = () => {
   };
 
   useEffect(() => {
-    const fetchRegisterPrompt = async () => {
-      const data = await apiCalls.getRegisterOption();
-      setShowAdminAlertModal(data.require_register);
-      setIsLoading(false);
-    };
-    fetchRegisterPrompt();
     const handleCredentialResponse = (response: any) => {
       loginGoogle({
         client_id: response.client_id,
         credential: response.credential,
       });
     };
-    window.google.accounts.id.initialize({
-      client_id: NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID,
-      callback: (data) => handleCredentialResponse(data),
-      state_cookie_domain: "https://example.com",
-    });
-
-    const signinDiv = document.getElementById("signinDiv");
-
-    if (signinDiv) {
-      window.google.accounts.id.renderButton(signinDiv, {
-        type: "standard",
-        shape: "pill",
-        theme: "outline",
-        size: "large",
-        width: 275,
+    if (isRendered) {
+      window.google.accounts.id.initialize({
+        client_id: NEXT_PUBLIC_GOOGLE_LOGIN_CLIENT_ID,
+        callback: (data) => handleCredentialResponse(data),
+        state_cookie_domain: "https://example.com",
       });
+      const signinDivId = document.getElementById("signinDiv");
+      if (signinDivId) {
+        window.google.accounts.id.renderButton(signinDivId, {
+          type: "standard",
+          shape: "pill",
+          theme: "outline",
+          size: "large",
+          width: 275,
+        });
+      }
     }
-  }, []);
+  }, [isRendered]);
 
+  useEffect(() => {
+    const fetchRegisterPrompt = async () => {
+      const data = await getRegisterOption();
+      setShowAdminAlertModal(data.require_register);
+      setIsLoading(false);
+    };
+    fetchRegisterPrompt();
+  }, []);
   useEffect(() => {
     if (recoveryCodes.length > 0) {
       setShowConfirmationModal(true);
@@ -100,12 +111,12 @@ const Login = () => {
     }
   }, [recoveryCodes]);
 
-  const handleAdminModalClose = (event: {}, reason: string) => {
+  const handleAdminModalClose = (_?: {}, reason?: string) => {
     if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
       setShowAdminAlertModal(false);
     }
   };
-  const handleRegisterModalClose = (event: {}, reason: string) => {
+  const handleRegisterModalClose = (_?: {}, reason?: string) => {
     if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
       setShowRegisterModal(false);
     }
@@ -346,7 +357,7 @@ const Login = () => {
               alignItems="center"
               justifyContent="center"
             >
-              <div id="signinDiv" />
+              <div ref={signinDiv} id="signinDiv" />
               <Layout.Spacer multiplier={2.5} />
               <Box display="flex" alignItems="center" width="100%">
                 <Box flexGrow={1} height="1px" bgcolor="lightgrey" />
@@ -358,6 +369,7 @@ const Login = () => {
               <Layout.Spacer multiplier={1.5} />
             </Box>
           )}
+
           <Box
             component="form"
             noValidate
@@ -433,12 +445,16 @@ const Login = () => {
           open={showRegisterModal}
           onClose={handleRegisterModalClose}
           onContinue={handleRegisterModalContinue}
-          registerUser={apiCalls.registerUser}
+          registerUser={(user: UserBodyPassword | UserBody) => {
+            const newUser = user as UserBodyPassword;
+            return registerUser(newUser.username, newUser.password);
+          }}
         />
         <ConfirmationModal
           open={showConfirmationModal}
           onClose={handleCloseConfirmationModal}
           recoveryCodes={recoveryCodes}
+          closeButtonText="Back to Login"
         />
       </Grid>
     </Grid>

@@ -9,6 +9,8 @@ from pydantic import ValidationError
 
 from ..config import (
     ALIGN_SCORE_THRESHOLD,
+    CUSTOM_TTS_ENDPOINT,
+    GCS_SPEECH_BUCKET,
     LITELLM_MODEL_ALIGNSCORE,
 )
 from ..question_answer.schemas import (
@@ -19,16 +21,21 @@ from ..question_answer.schemas import (
     QueryResponseError,
 )
 from ..question_answer.speech_components.external_voice_components import (
-    generate_tts_on_gcs,
+    synthesize_speech,
 )
+from ..question_answer.speech_components.utils import post_to_internal_tts
 from ..question_answer.utils import get_context_string_from_search_results
-from ..utils import create_langfuse_metadata, setup_logger
-from .llm_prompts import RAG_FAILURE_MESSAGE, AlignmentScore
-from .llm_rag import get_llm_rag_answer
-from .utils import (
-    _ask_llm_async,
-    remove_json_markdown,
+from ..utils import (
+    create_langfuse_metadata,
+    generate_public_url,
+    generate_random_filename,
+    get_file_extension_from_mime_type,
+    setup_logger,
+    upload_file_to_gcs,
 )
+from .llm_prompts import RAG_FAILURE_MESSAGE, AlignmentScore
+from .llm_rag import get_llm_rag_answer, get_llm_rag_answer_with_chat_history
+from .utils import _ask_llm_async, remove_json_markdown
 
 logger = setup_logger("OUTPUT RAILS")
 
@@ -43,40 +50,70 @@ class AlignScoreData(TypedDict):
 
 
 async def generate_llm_query_response(
+    *,
+    metadata: Optional[dict] = None,
     query_refined: QueryRefined,
     response: QueryResponse,
-    metadata: Optional[dict] = None,
-) -> QueryResponse:
-    """
-    Generate the LLM response.
+) -> tuple[QueryResponse | QueryResponseError, list[Any]]:
+    """Generate the LLM response. If `chat_query_params` is provided, then the response
+    is generated based on the chat history.
 
-    Only runs if the generate_llm_response flag is set to True.
+    Only runs if the `generate_llm_response` flag is set to `True`.
     Requires "search_results" and "original_language" in the response.
+
+    Parameters
+    ----------
+    metadata
+        Additional metadata to provide to the LLM model.
+    query_refined
+        The refined query object.
+    response
+        The query response object.
+
+    Returns
+    -------
+    tuple[QueryResponse | QueryResponseError, list[Any]]
+        The updated response object and the chat history.
     """
+
+    chat_query_params = query_refined.chat_query_params or {}
+    chat_history = chat_query_params.get("chat_history", [])
     if isinstance(response, QueryResponseError):
         logger.warning("LLM generation skipped due to QueryResponseError.")
-        return response
-
+        return response, chat_history
     if response.search_results is None:
         logger.warning("No search_results found in the response.")
-        return response
+        return response, chat_history
     if query_refined.original_language is None:
         logger.warning("No original_language found in the query.")
-        return response
+        return response, chat_history
 
     context = get_context_string_from_search_results(response.search_results)
-    rag_response = await get_llm_rag_answer(
-        # use the original query text
-        question=query_refined.query_text_original,
-        context=context,
-        original_language=query_refined.original_language,
-        metadata=metadata,
-    )
+    if chat_query_params:
+        message_type = chat_query_params["message_type"]
+        response.message_type = message_type
+        rag_response, chat_history = await get_llm_rag_answer_with_chat_history(
+            chat_history=chat_history,
+            chat_params=chat_query_params["chat_params"],
+            context=context,
+            message_type=message_type,
+            metadata=metadata,
+            original_language=query_refined.original_language,
+            question=query_refined.query_text_original,
+            session_id=chat_query_params["session_id"],
+        )
+    else:
+        rag_response = await get_llm_rag_answer(
+            # use the original query text
+            question=query_refined.query_text_original,
+            context=context,
+            original_language=query_refined.original_language,
+            metadata=metadata,
+        )
 
     if rag_response.answer != RAG_FAILURE_MESSAGE:
         response.debug_info["extracted_info"] = rag_response.extracted_info
         response.llm_response = rag_response.answer
-
     else:
         response = QueryResponseError(
             query_id=response.query_id,
@@ -91,7 +128,7 @@ async def generate_llm_query_response(
         response.debug_info["extracted_info"] = rag_response.extracted_info
         response.llm_response = None
 
-    return response
+    return response, chat_history
 
 
 def check_align_score__after(func: Callable) -> Callable:
@@ -203,7 +240,7 @@ async def _get_llm_align_score(
         system_message=prompt,
         litellm_model=LITELLM_MODEL_ALIGNSCORE,
         metadata=metadata,
-        json=True,
+        json_=True,
     )
 
     try:
@@ -285,16 +322,38 @@ async def _generate_tts_response(
         )
         return response
 
-    if query_refined.original_language is None:
-        error_msg = "Language must be provided to generate speech."
-        logger.error(error_msg)
-        raise ValueError(error_msg)
-
     try:
-        tts_file_path = await generate_tts_on_gcs(
-            text=response.llm_response,
-            language=query_refined.original_language,
+        if query_refined.original_language is None:
+            error_msg = "Language must be provided to generate speech."
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+
+        if CUSTOM_TTS_ENDPOINT is not None:
+            tts_file = await post_to_internal_tts(
+                text=response.llm_response,
+                endpoint_url=CUSTOM_TTS_ENDPOINT,
+                language=query_refined.original_language,
+            )
+
+        else:
+            tts_file = await synthesize_speech(
+                text=response.llm_response,
+                language=query_refined.original_language,
+            )
+
+        content_type = "audio/wav"
+        file_extension = get_file_extension_from_mime_type(content_type)
+        unique_filename = generate_random_filename(file_extension)
+        destination_blob_name = f"tts-voice-notes/{unique_filename}"
+
+        await upload_file_to_gcs(
+            GCS_SPEECH_BUCKET, tts_file, destination_blob_name, content_type
         )
+
+        tts_file_path = await generate_public_url(
+            GCS_SPEECH_BUCKET, destination_blob_name
+        )
+
         response.tts_filepath = tts_file_path
     except ValueError as e:
         logger.error(f"Error generating TTS for query_id {response.query_id}: {e}")
