@@ -1,6 +1,12 @@
-type Period = "day" | "week" | "month" | "year";
+type Period = "day" | "week" | "month" | "year" | "custom";
 type TimeFrame = "Last 24 hours" | "Last week" | "Last month" | "Last year";
+type CustomDashboardFrequency = "Hour" | "Day" | "Week" | "Month";
 
+interface CustomDateParams {
+  startDate: string | null;
+  endDate: string | null;
+  frequency: CustomDashboardFrequency;
+}
 interface DrawerData {
   title: string;
   query_count: number;
@@ -33,6 +39,7 @@ interface InputSeriesData {
     [timestamp: string]: number;
   };
 }
+
 interface ApexTSDataPoint {
   x: number;
   y: number;
@@ -58,8 +65,8 @@ interface TopContentData extends ContentData {
 }
 
 interface RowDataType extends ContentData {
-  query_count_timeseries: number[];
   id: number;
+  query_count_timeseries: ApexTSDataPoint[];
 }
 
 interface QueryData {
@@ -82,6 +89,8 @@ interface TopicModelingResponse {
   refreshTimeStamp: string;
   data: TopicModelingData[];
   unclustered_queries: QueryData[];
+  error_message?: string;
+  failure_step?: string;
 }
 
 interface TopicData {
@@ -90,20 +99,31 @@ interface TopicData {
   topic_popularity: number;
 }
 
+interface ContentLineChartTSData {
+  name: string;
+  data: ApexTSDataPoint[];
+  color?: string;
+  zIndex?: number;
+}
 export type {
-  DrawerData,
   Period,
   TimeFrame,
+  DrawerData,
   DayHourUsageData,
   ApexData,
-  ApexSeriesData,
   InputSeriesData,
+  ApexTSDataPoint,
+  ApexSeriesData,
   TopContentData,
   RowDataType,
   QueryData,
-  TopicData,
   TopicModelingData,
   TopicModelingResponse,
+  Status,
+  CustomDateParams,
+  CustomDashboardFrequency,
+  ContentLineChartTSData,
+  TopicData,
 };
 
 export { drawerWidth };

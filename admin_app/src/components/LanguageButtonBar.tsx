@@ -18,9 +18,7 @@ interface Language {
 const LanguageButtonBar = ({ expandable }: { expandable: boolean }) => {
   const [langList, setLangList] = React.useState<(Language | undefined)[]>(
     expandable
-      ? [LANGUAGE_OPTIONS.find((l) => l.code === DEFAULT_LANGUAGE)].filter(
-          Boolean,
-        )
+      ? [LANGUAGE_OPTIONS.find((l) => l.code === DEFAULT_LANGUAGE)].filter(Boolean)
       : LANGUAGE_OPTIONS,
   );
   const [selectedLang, setSelectedLang] = React.useState<string>("en");

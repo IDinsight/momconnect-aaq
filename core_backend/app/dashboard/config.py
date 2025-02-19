@@ -1,7 +1,7 @@
 import os
 
 DISABLE_DASHBOARD_LLM = (
-    os.environ.get("DISABLE_DASHBOARD_LLM", "false").lower() == "true"
+    os.environ.get("DISABLE_DASHBOARD_LLM", "true").lower() == "true"
 )
 MAX_FEEDBACK_RECORDS_FOR_AI_SUMMARY = os.environ.get(
     "MAX_FEEDBACK_RECORDS_FOR_AI_SUMMARY", 100
