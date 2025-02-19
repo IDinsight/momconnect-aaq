@@ -63,7 +63,8 @@ jobs:
             domain:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-domain
             openai-api-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-openai-api-key
             gcp-credential-json:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-gcp-credential-json
-
+            huggingface-api-key:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-huggingface-api-key
+            huggingface-endpoint:${{ secrets.GCP_PROJECT_ID }}/${{ env.RESOURCE_PREFIX }}-huggingface-endpoint
       - name: Copy LiteLLM deployment files
         working-directory: deployment/docker-compose
         run: |
