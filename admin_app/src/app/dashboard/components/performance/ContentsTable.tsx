@@ -20,6 +20,7 @@ import { RowDataType, ApexTSDataPoint } from "@/app/dashboard/types";
 import { SortableTableHeader } from "./SortableTableHeader";
 const ReactApexcharts = dynamic(() => import("react-apexcharts"), { ssr: false });
 
+
 interface QueryCountTimeSeriesProps {
   queryCount: ApexTSDataPoint[];
   color: string;

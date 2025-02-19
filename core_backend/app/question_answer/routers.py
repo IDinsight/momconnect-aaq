@@ -22,6 +22,7 @@ from ..config import (
     REDIS_CHAT_CACHE_EXPIRY_TIME,
     USE_CROSS_ENCODER,
 )
+
 from ..contents.models import (
     get_similar_content_async,
     increment_query_count,
@@ -50,6 +51,7 @@ from ..utils import (
     create_langfuse_metadata,
     generate_random_filename,
     get_random_int32,
+
     setup_logger,
     upload_file_to_gcs,
 )
@@ -77,6 +79,7 @@ from .speech_components.utils import (
     download_file_from_url,
     post_to_speech_stt,
 )
+
 from .utils import is_gibberish
 
 logger = setup_logger()
@@ -392,6 +395,7 @@ async def voice_search(
 @classify_safety__before
 @translate_question__before
 @paraphrase_question__before
+
 async def get_search_response(
     query_refined: QueryRefined,
     response: QueryResponse,
