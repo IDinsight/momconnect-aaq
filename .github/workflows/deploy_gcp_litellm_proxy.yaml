@@ -39,7 +39,6 @@ jobs:
       contents: "read"
       id-token: "write"
 
-    environment: mc-aaq-${{ needs.set-env.outputs.env_name }}
 
     env:
       RESOURCE_PREFIX: ${{ secrets.PROJECT_NAME }}-${{ needs.set-env.outputs.env_name }}

@@ -3,7 +3,7 @@
 from datetime import date, datetime, timezone
 from typing import Any, Sequence, cast, get_args
 
-from sqlalchemy import Row, case, desc, func, literal_column, select, text, true
+from sqlalchemy import Row, case, desc, func, literal_column, or_, select, text, true
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import and_
 from sqlalchemy.sql.expression import Subquery
@@ -174,8 +174,8 @@ async def get_overview_timeseries(
 
     return OverviewTimeSeries(
         urgent=urgency_ts,
-        not_urgent_escalated=query_ts["escalated"],
-        not_urgent_not_escalated=query_ts["not_escalated"],
+        downvoted=query_ts["escalated"],
+        normal=query_ts["not_escalated"],
     )
 
 
@@ -251,7 +251,6 @@ def get_time_labels_query(
     ValueError
         If the frequency is invalid.
     """
-
     match frequency:
         case TimeFrequency.Day:
             interval_str = "day"
@@ -259,6 +258,8 @@ def get_time_labels_query(
             interval_str = "week"
         case TimeFrequency.Hour:
             interval_str = "hour"
+        case TimeFrequency.Month:
+            interval_str = "month"
         case _:
             raise ValueError("Invalid frequency")
 
@@ -287,7 +288,8 @@ async def get_timeseries_query(
     end_date: date,
     frequency: TimeFrequency,
 ) -> dict[str, dict[str, int]]:
-    """Retrieve the timeseries corresponding to escalated and not escalated queries
+    """
+    Retrieve the timeseries corresponding to escalated and not escalated queries
     over the specified time period.
 
     NB: The SQLAlchemy statement below selects time periods from `ts_labels` and counts
@@ -315,26 +317,56 @@ async def get_timeseries_query(
     dict[str, dict[str, int]]
         Dictionary whose keys are "escalated" and "not_escalated" and whose values are
         dictionaries containing the count of queries over time for each category.
+        {
+          "escalated": { "2025-01-01T00:00:00.000000Z": 5, ... },
+          "not_escalated": { "2025-01-01T00:00:00.000000Z": 12, ... },
+        }
     """
 
     interval_str, ts_labels = get_time_labels_query(frequency, start_date, end_date)
 
+    # In this pattern:
+    # 1) We outer-join Query so that each date bin always has all queries (including
+    # those with no feedback).
+    # 2) We outer-join ResponseFeedbackDB so that queries with no feedback show up
+    # with NULL feedback_sentiment.
+    # 3) CASE statement counts all NULL or non-'negative' as
+    # "non_negative_feedback_count", and 'negative' feedback
+    # as "negative_feedback_count".
+
     statement = (
         select(
             ts_labels.c.time_period,
+            # negative count
             func.coalesce(
                 func.count(
                     case(
-                        (ResponseFeedbackDB.feedback_sentiment == "negative", 1),
+                        (
+                            and_(
+                                QueryDB.query_id.isnot(None),
+                                ResponseFeedbackDB.feedback_sentiment == "negative",
+                            ),
+                            1,
+                        ),
                         else_=None,
                     )
                 ),
                 0,
             ).label("negative_feedback_count"),
+            # non-negative count
             func.coalesce(
                 func.count(
                     case(
-                        (ResponseFeedbackDB.feedback_sentiment != "negative", 1),
+                        (
+                            and_(
+                                QueryDB.query_id.isnot(None),
+                                or_(
+                                    ResponseFeedbackDB.feedback_sentiment.is_(None),
+                                    ResponseFeedbackDB.feedback_sentiment != "negative",
+                                ),
+                            ),
+                            1,
+                        ),
                         else_=None,
                     )
                 ),
@@ -343,11 +375,17 @@ async def get_timeseries_query(
         )
         .select_from(ts_labels)
         .outerjoin(
-            ResponseFeedbackDB,
-            func.date_trunc(interval_str, ResponseFeedbackDB.feedback_datetime_utc)
-            == func.date_trunc(interval_str, ts_labels.c.time_period),
+            QueryDB,
+            and_(
+                QueryDB.user_id == user_id,
+                func.date_trunc(interval_str, QueryDB.query_datetime_utc)
+                == func.date_trunc(interval_str, ts_labels.c.time_period),
+            ),
         )
-        .where(ResponseFeedbackDB.query.has(user_id=user_id))
+        .outerjoin(
+            ResponseFeedbackDB,
+            ResponseFeedbackDB.query_id == QueryDB.query_id,
+        )
         .group_by(ts_labels.c.time_period)
         .order_by(ts_labels.c.time_period)
     )
@@ -1262,9 +1300,12 @@ async def get_raw_queries(
     asession: AsyncSession,
     user_id: int,
     start_date: date,
+    end_date: date,
 ) -> list[UserQuery]:
-    """Retrieve 2000 randomly sampled raw queries (query_text) and their
-    datetime stamps within the specified date range.
+    """
+    Retrieve N_SAMPLES_TOPIC_MODELING randomly sampled raw queries (query_text) and
+    their datetime stamps within the specified date range.
+
     Parameters
     ----------
     asession
@@ -1273,6 +1314,7 @@ async def get_raw_queries(
         The ID of the user to retrieve the queries for.
     start_date
         The starting date for the queries.
+
     Returns
     -------
     list[UserQuery]
@@ -1284,6 +1326,7 @@ async def get_raw_queries(
         .where(
             (QueryDB.user_id == user_id)
             & (QueryDB.query_datetime_utc >= start_date)
+            & (QueryDB.query_datetime_utc < end_date)
             & (QueryDB.query_datetime_utc < datetime.now(tz=timezone.utc))
         )
         .order_by(func.random())

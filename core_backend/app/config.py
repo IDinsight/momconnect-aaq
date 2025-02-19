@@ -25,7 +25,7 @@ PGVECTOR_DISTANCE = os.environ.get("PGVECTOR_DISTANCE", "vector_cosine_ops")
 
 # LiteLLM proxy variables
 # Endpoint
-LITELLM_ENDPOINT = os.environ.get("LITELLM_ENDPOINT", "http://localhost:8080")
+LITELLM_ENDPOINT = os.environ.get("LITELLM_ENDPOINT", "http://localhost:4000")
 # API Key to access embeddings
 LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "update-embeddings-api-key")
 # Model names. All names come under "openai/..." and correspond to the
@@ -34,8 +34,9 @@ LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "update-embeddings-api-key")
 # for all of its endpoints.
 HUGGINGFACE_MODEL = os.environ.get("HUGGINGFACE_MODEL", "Alibaba-NLP/gte-large-en-v1.5")
 
-LITELLM_MODEL_EMBEDDING = f"huggingface/{HUGGINGFACE_MODEL}"
+LITELLM_MODEL_EMBEDDING = os.environ.get("LITELLM_MODEL_EMBEDDING", "openai/embeddings")
 LITELLM_MODEL_DEFAULT = os.environ.get("LITELLM_MODEL_DEFAULT", "openai/default")
+LITELLM_MODEL_CHAT = os.environ.get("LITELLM_MODEL_CHAT", "openai/chat")
 LITELLM_MODEL_GENERATION = os.environ.get(
     "LITELLM_MODEL_GENERATION", "openai/generate-response"
 )
@@ -84,7 +85,9 @@ ALIGN_SCORE_THRESHOLD = os.environ.get("ALIGN_SCORE_THRESHOLD", 0.7)
 BACKEND_ROOT_PATH = os.environ.get("BACKEND_ROOT_PATH", "")
 
 # Speech API
-CUSTOM_SPEECH_ENDPOINT = os.environ.get("CUSTOM_SPEECH_ENDPOINT", None)
+CUSTOM_STT_ENDPOINT = os.environ.get("CUSTOM_STT_ENDPOINT", None)
+CUSTOM_TTS_ENDPOINT = os.environ.get("CUSTOM_TTS_ENDPOINT", None)
+
 # Logging
 LANGFUSE = os.environ.get("LANGFUSE", "False")
 
@@ -93,6 +96,13 @@ DB_POOL_SIZE = os.environ.get("DB_POOL_SIZE", 20)  # Number of connections in th
 
 # Redis
 REDIS_HOST = os.environ.get("REDIS_HOST", "redis://localhost:6379")
+REDIS_CHAT_CACHE_EXPIRY_TIME = 3600
 
 # Google Cloud storage
 GCS_SPEECH_BUCKET = os.environ.get("GCS_SPEECH_BUCKET", "aaq-speech-test")
+
+# Sentry config
+SENTRY_DSN = os.environ.get("SENTRY_DSN", None)
+SENTRY_TRACES_SAMPLE_RATE = os.environ.get(
+    "SENTRY_TRACES_SAMPLE_RATE", 1.0
+)  # 1.0 means 100% of traces are sent to Sentry
