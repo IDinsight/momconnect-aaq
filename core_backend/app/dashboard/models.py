@@ -354,7 +354,6 @@ async def get_timeseries_query(
                 0,
             ).label("negative_feedback_count"),
             # non-negative count
-
             func.coalesce(
                 func.count(
                     case(

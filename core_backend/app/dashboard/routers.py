@@ -317,7 +317,6 @@ async def refresh_insights_frequency(
     background_tasks.add_task(
         refresh_insights,
         timeframe=timeframe,
-
         user_db=user_db,
         request=request,
         start_date=start_dt,
