@@ -98,6 +98,61 @@ gibberish_model = pickle.load(open(Path(__file__).parent / "gibberish_model.pkl"
 
 
 @router.post(
+    "/chat",
+    response_model=QueryResponse,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": QueryResponseError,
+            "description": "Guardrail failure",
+        }
+    },
+)
+async def chat(
+    user_query: QueryBase,
+    request: Request,
+    asession: AsyncSession = Depends(get_async_session),
+    user_db: UserDB = Depends(authenticate_key),
+    reset_chat_history: bool = False,
+) -> QueryResponse | JSONResponse:
+    """Chat endpoint manages a conversation between the user and the LLM agent. The
+    conversation history is stored in a Redis cache. The process is as follows:
+
+    1. Initialize chat histories and update the user query object.
+    2. Call the search function to get the appropriate response.
+
+    Parameters
+    ----------
+    user_query
+        The user query object.
+    request
+        The FastAPI request object.
+    asession
+        The `AsyncSession` object for database transactions.
+    user_db
+        The user database object.
+    reset_chat_history
+        Specifies whether to reset the chat history.
+
+    Returns
+    -------
+    QueryResponse | JSONResponse
+        The query response object or an appropriate JSON response.
+    """
+
+    # 1.
+    user_query = await init_user_query_and_chat_histories(
+        redis_client=request.app.state.redis,
+        reset_chat_history=reset_chat_history,
+        user_query=user_query,
+    )
+
+    # 2.
+    return await search(
+        user_query=user_query, request=request, asession=asession, user_db=user_db
+    )
+
+
+@router.post(
     "/search",
     response_model=QueryResponse,
     responses={

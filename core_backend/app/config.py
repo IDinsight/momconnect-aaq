@@ -25,7 +25,7 @@ PGVECTOR_DISTANCE = os.environ.get("PGVECTOR_DISTANCE", "vector_cosine_ops")
 
 # LiteLLM proxy variables
 # Endpoint
-LITELLM_ENDPOINT = os.environ.get("LITELLM_ENDPOINT", "http://localhost:8080")
+LITELLM_ENDPOINT = os.environ.get("LITELLM_ENDPOINT", "http://localhost:4000")
 # API Key to access embeddings
 LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "update-embeddings-api-key")
 # Model names. All names come under "openai/..." and correspond to the
@@ -34,7 +34,7 @@ LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "update-embeddings-api-key")
 # for all of its endpoints.
 HUGGINGFACE_MODEL = os.environ.get("HUGGINGFACE_MODEL", "Alibaba-NLP/gte-large-en-v1.5")
 
-LITELLM_MODEL_EMBEDDING = f"huggingface/{HUGGINGFACE_MODEL}"
+LITELLM_MODEL_EMBEDDING = os.environ.get("LITELLM_MODEL_EMBEDDING", "openai/embeddings")
 LITELLM_MODEL_DEFAULT = os.environ.get("LITELLM_MODEL_DEFAULT", "openai/default")
 LITELLM_MODEL_CHAT = os.environ.get("LITELLM_MODEL_CHAT", "openai/chat")
 LITELLM_MODEL_GENERATION = os.environ.get(

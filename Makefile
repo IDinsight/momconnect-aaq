@@ -30,8 +30,8 @@ fresh-env :
 	fi
 
 # Dev requirements
-setup-dev: setup-db setup-redis #setup-embeddings-arm
-teardown-dev: teardown-db teardown-redis teardown-embeddings
+setup-dev: setup-db setup-redis setup-llm-proxy #setup-embeddings-arm
+teardown-dev: teardown-db teardown-redis teardown-embeddings teardown-llm-proxy
 
 ## Helper targets
 guard-%:

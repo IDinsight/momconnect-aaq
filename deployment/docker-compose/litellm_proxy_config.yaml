@@ -1,13 +1,13 @@
 model_list:
-  - model_name: embeddings
-    litellm_params:
-      model: text-embedding-3-small
-      api_key: "os.environ/OPENAI_API_KEY" #pragma: allowlist secret
   # - model_name: embeddings
   #   litellm_params:
-  #     model: huggingface/huggingface-embeddings # model name not important
-  #     api_key: "os.environ/HUGGINGFACE_EMBEDDINGS_API_KEY" #pragma: allowlist secret
-  #     api_base: "os.environ/HUGGINGFACE_EMBEDDINGS_ENDPOINT"
+  #     model: text-embedding-3-small
+  #     api_key: "os.environ/OPENAI_API_KEY" #pragma: allowlist secret
+  - model_name: embeddings
+    litellm_params:
+      model: huggingface/huggingface-embeddings # model name not important
+      api_key: "os.environ/HUGGINGFACE_EMBEDDINGS_API_KEY" #pragma: allowlist secret
+      api_base: "os.environ/HUGGINGFACE_EMBEDDINGS_ENDPOINT"
   - model_name: default
     litellm_params:
       model: gpt-4o
