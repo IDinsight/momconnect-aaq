@@ -340,7 +340,7 @@ async def voice_search(
             generate_tts=True,
         )
 
-        response = await get_search_response(
+        response = await get_search_response_llm(
             query_refined=user_query_refined_template,
             response=response_template,
             user_id=user_db.user_id,
