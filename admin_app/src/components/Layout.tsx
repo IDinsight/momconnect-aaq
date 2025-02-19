@@ -23,14 +23,8 @@ interface BaseProps {
 const Spacer = ({ horizontal, multiplier = 1 }: BaseProps) => {
   return (
     <BlankDiv
-      height={
-        !horizontal
-          ? `${parseFloat(sizes.baseGap) * Number(multiplier)}px`
-          : "0"
-      }
-      width={
-        horizontal ? `${parseFloat(sizes.baseGap) * Number(multiplier)}px` : "0"
-      }
+      height={!horizontal ? `${parseFloat(sizes.baseGap) * Number(multiplier)}px` : "0"}
+      width={horizontal ? `${parseFloat(sizes.baseGap) * Number(multiplier)}px` : "0"}
     />
   );
 };
