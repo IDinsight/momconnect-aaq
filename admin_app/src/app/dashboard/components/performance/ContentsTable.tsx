@@ -18,8 +18,9 @@ import theme from "@/theme";
 import dynamic from "next/dynamic";
 import { RowDataType, ApexTSDataPoint } from "@/app/dashboard/types";
 import { SortableTableHeader } from "./SortableTableHeader";
-const ReactApexcharts = dynamic(() => import("react-apexcharts"), { ssr: false });
-
+const ReactApexcharts = dynamic(() => import("react-apexcharts"), {
+  ssr: false,
+});
 
 interface QueryCountTimeSeriesProps {
   queryCount: ApexTSDataPoint[];

@@ -4,7 +4,7 @@ import json
 from typing import Any, Optional
 
 import redis.asyncio as aioredis
-import requests
+import requests  # type: ignore
 from litellm import acompletion, token_counter
 
 from ..config import (
@@ -16,7 +16,7 @@ from ..config import (
 )
 from ..utils import setup_logger
 
-logger = setup_logger("LLM_call")
+logger = setup_logger(name="LLM_call")
 
 
 async def _ask_llm_async(
@@ -71,15 +71,10 @@ async def _ask_llm_async(
     if not messages:
         assert isinstance(user_message, str) and isinstance(system_message, str)
         messages = [
-            {
-                "content": system_message,
-                "role": "system",
-            },
-            {
-                "content": user_message,
-                "role": "user",
-            },
+            {"content": system_message, "role": "system"},
+            {"content": user_message, "role": "user"},
         ]
+
     llm_generation_params = llm_generation_params or {
         "max_tokens": 1024,
         "temperature": 0,
@@ -87,17 +82,41 @@ async def _ask_llm_async(
 
     logger.info(f"LLM input: 'model': {litellm_model}, 'endpoint': {litellm_endpoint}")
 
-    llm_response_raw = await acompletion(
-        model=litellm_model,
-        messages=messages,
-        api_base=litellm_endpoint,
-        api_key=LITELLM_API_KEY,
-        metadata=metadata,
-        **extra_kwargs,
-        **llm_generation_params,
-    )
-    logger.info(f"LLM output: {llm_response_raw.choices[0].message.content}")
-    return llm_response_raw.choices[0].message.content
+    try:
+        llm_response_raw = await acompletion(
+            model=litellm_model,
+            messages=messages,
+            api_base=litellm_endpoint,
+            api_key=LITELLM_API_KEY,
+            metadata=metadata,
+            **extra_kwargs,
+            **llm_generation_params,
+        )
+    except Exception as err:
+        logger.error("Error calling the LLM", exc_info=True)
+        raise LLMCallException(f"Error during LLM call: {err}") from err
+
+    # Optionally check if the returned response contains an error field
+    if hasattr(llm_response_raw, "error") and llm_response_raw.error:
+        error_msg = getattr(llm_response_raw, "error", "Unknown error")
+        logger.error(f"LLM call returned an error: {error_msg}")
+        raise LLMCallException(f"LLM call returned an error: {error_msg}")
+
+    # Ensure that the response has valid content
+    try:
+        content = llm_response_raw.choices[0].message.content
+    except (AttributeError, IndexError) as e:
+        logger.error("LLM response structure is not as expected", exc_info=True)
+        raise LLMCallException("LLM response structure is not as expected") from e
+
+    logger.info(f"LLM output: {content}")
+    return content
+
+
+class LLMCallException(Exception):
+    """Custom exception for LLM call errors."""
+
+    pass
 
 
 def _truncate_chat_history(
@@ -442,7 +461,7 @@ async def init_chat_history(
     logger.info(f"Initializing chat parameters for session: {session_id}")
     model_info_endpoint = LITELLM_ENDPOINT.rstrip("/") + "/model/info"
     model_info = requests.get(
-        model_info_endpoint, headers={"accept": "application/json"}
+        model_info_endpoint, headers={"accept": "application/json"}, timeout=600
     ).json()
     for dict_ in model_info["data"]:
         if dict_["model_name"] == "chat":
@@ -508,7 +527,7 @@ def log_chat_history(
             logger.info(f"\n{role}:\n({name}): {content}\n")
 
 
-def remove_json_markdown(text: str) -> str:
+def remove_json_markdown(*, text: str) -> str:
     """Remove json markdown from text.
 
     Parameters
@@ -525,7 +544,7 @@ def remove_json_markdown(text: str) -> str:
     text = text.strip()
     if text.startswith("```") and text.endswith("```"):
         text = text.removeprefix("```json").removesuffix("```")
-    text = text.replace("\{", "{").replace("\}", "}")
+    text = text.replace(r"\{", "{").replace(r"\}", "}")
     return text.strip()
 
 

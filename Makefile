@@ -29,6 +29,14 @@ fresh-env :
 		pip install psycopg2-binary==2.9.9; \
 	fi
 
+# Linting
+lint-core-backend:
+	black core_backend/
+	ruff check core_backend/
+	mypy core_backend/app --ignore-missing-imports --explicit-package-base
+	mypy core_backend/tests --ignore-missing-imports --explicit-package-base
+	pylint core_backend/
+
 # Dev requirements
 setup-dev: setup-db setup-redis setup-llm-proxy #setup-embeddings-arm
 teardown-dev: teardown-db teardown-redis teardown-embeddings teardown-llm-proxy
@@ -67,7 +75,7 @@ setup-redis:
      -p 6379:6379 \
      -d redis:6.0-alpine
 
-make teardown-redis:
+teardown-redis:
 	@docker stop redis-local
 	@docker rm redis-local
 
@@ -131,3 +139,13 @@ setup-embeddings: guard-HUGGINGFACE_MODEL guard-HUGGINGFACE_EMBEDDINGS_API_KEY
 teardown-embeddings:
 	@docker stop huggingface-embeddings
 	@docker rm  huggingface-embeddings
+
+run-docker-compose-dev:
+	$(CONDA_ACTIVATE) $(PROJECT_NAME)
+	@docker compose -f deployment/docker-compose/docker-compose-dev.yml -p aaq-dev up --build -d --remove-orphans
+	@docker system prune -f
+
+stop-docker-compose-dev:
+	@docker compose -f deployment/docker-compose/docker-compose-dev.yml -p aaq-dev down
+
+restart-docker-compose-dev: stop-docker-compose-dev run-docker-compose-dev

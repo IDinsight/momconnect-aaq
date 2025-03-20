@@ -34,6 +34,7 @@ import {
 
 export interface Content extends EditContentBody {
   content_id: number | null;
+  display_number: number;
   positive_votes: number;
   negative_votes: number;
   created_datetime_utc: string;
@@ -79,7 +80,7 @@ const AddEditContentPage = () => {
           flexDirection: "row",
           justifyContent: "center",
           alignItems: "center",
-          height: "100vh",
+          height: "100%",
           width: "100%",
         }}
       >
@@ -90,34 +91,35 @@ const AddEditContentPage = () => {
   return (
     <FullAccessComponent>
       <Layout.FlexBox
-        flexDirection={"column"}
-        sx={{ p: sizes.doubleBaseGap, marginTop: 5 }}
+        sx={{
+          flexDirection: "column",
+          marginTop: 2,
+          marginBottom: 1,
+          p: sizes.doubleBaseGap,
+          gap: sizes.baseGap,
+        }}
       >
         <Header
-          content_id={content_id}
+          display_number={content?.display_number || null}
           onBack={() =>
             isSaved ? router.push("/content") : setOpenDiscardChangesModal(true)
           }
         />
-        <Layout.FlexBox flexDirection={"column"}>
-          <Layout.Spacer multiplier={2} />
-          <ContentBox
-            content={content}
-            setContent={setContent}
-            getTagList={() => {
-              return getTagList(token!);
-            }}
-            addTag={(tag: string) => {
-              return createTag(tag, token!);
-            }}
-            deleteTag={(tag_id: number) => {
-              return deleteTag(tag_id, token!);
-            }}
-            isSaved={isSaved}
-            setIsSaved={setIsSaved}
-          />
-          <Layout.Spacer multiplier={1} />
-        </Layout.FlexBox>
+        <ContentBox
+          content={content}
+          setContent={setContent}
+          getTagList={() => {
+            return getTagList(token!);
+          }}
+          addTag={(tag: string) => {
+            return createTag(tag, token!);
+          }}
+          deleteTag={(tag_id: number) => {
+            return deleteTag(tag_id, token!);
+          }}
+          isSaved={isSaved}
+          setIsSaved={setIsSaved}
+        />
       </Layout.FlexBox>
       <DiscardChangesModal
         open={openDiscardChangesModal}
@@ -247,6 +249,7 @@ const ContentBox = ({
       updated_datetime_utc: "",
       positive_votes: 0,
       negative_votes: 0,
+      display_number: 0,
       content_title: "",
       content_text: "",
       content_tags: contentTags.map((tag) => tag!.tag_id),
@@ -569,23 +572,23 @@ const ContentBox = ({
 };
 
 const Header = ({
-  content_id,
+  display_number,
   onBack,
 }: {
-  content_id: number | null;
+  display_number: number | null;
   onBack: () => void;
 }) => {
   return (
     <Layout.FlexBox flexDirection="row" {...appStyles.alignItemsCenter}>
       <ChevronLeft style={{ cursor: "pointer" }} onClick={onBack} />
       <Layout.Spacer multiplier={1} horizontal />
-      {content_id ? (
+      {display_number ? (
         <>
           <Typography variant="h5">Edit Content</Typography>
           <Layout.Spacer multiplier={2} horizontal />
           <Typography variant="h5">{`\u2022`}</Typography>
           <Layout.Spacer multiplier={2} horizontal />
-          <Typography variant="h5">#{content_id}</Typography>
+          <Typography variant="h5">#{display_number}</Typography>
         </>
       ) : (
         <Typography variant="h5">Add Content</Typography>

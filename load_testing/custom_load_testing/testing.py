@@ -101,17 +101,12 @@ def run_tests(experiment_configs: dict, output_folder: str) -> None:
 
     for locustfile in locustfile_list:
         for users_id, users in enumerate(users_list):
-
             run_time = run_time_list[users_id]
             spawn_rate = spawn_rate_list[users_id]
 
             locustfile_path = "locustfiles/" + locustfile
-            test_name = (
-                f"{users}_user_{locustfile[:-3]}"  # [:-3] removes .py extension
-            )
-            test_html_filpath = (
-                f"{output_folder}/html_reports/{test_name}_report.html"
-            )
+            test_name = f"{users}_user_{locustfile[:-3]}"  # [:-3] removes .py extension
+            test_html_filpath = f"{output_folder}/html_reports/{test_name}_report.html"
             output_subfolder = f"{output_folder}/raw/{test_name}/"
             os.makedirs(output_subfolder, exist_ok=True)
 
@@ -136,9 +131,7 @@ def run_tests(experiment_configs: dict, output_folder: str) -> None:
                 test_html_filpath=test_html_filpath,
             )
 
-            time.sleep(
-                30
-            )  # Sleep for 30 seconds between tests to let loads quiet down
+            time.sleep(30)  # Sleep for 30 seconds between tests to let loads quiet down
 
             logging.info(f"{test_name} load-test completed.")
 

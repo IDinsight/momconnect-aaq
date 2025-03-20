@@ -26,9 +26,7 @@ class AAQUser(HttpUser):
         endpoint: str = "search",
         question: str = "Is this great content?",
         local: bool = False,
-    ) -> (
-        None
-    ):  # If testing locally, set local to True to ignore SSL verification
+    ) -> None:  # If testing locally, set local to True to ignore SSL verification
         """Sends a question to the API.
 
         This task sends the same question repeatedly.

@@ -33,9 +33,9 @@ const ProtectedComponent: React.FC<ProtectedComponentProps> = ({ children }) => 
 
 const FullAccessComponent: React.FC<ProtectedComponentProps> = ({ children }) => {
   const router = useRouter();
-  const { token, accessLevel } = useAuth();
+  const { token, userRole } = useAuth();
 
-  if (token && accessLevel == "fullaccess") {
+  if (token && userRole == "admin") {
     return <>{children}</>;
   } else {
     return (

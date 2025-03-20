@@ -32,9 +32,7 @@ class TypeBotUser(HttpUser):
         the ID from the API option.
         """
         typebot_id: str = os.getenv("TYPEBOT_BOT_ID", "")
-        typbot_init_endpoint: str = (
-            f"viewer/api/v1/typebots/{typebot_id}/startChat"
-        )
+        typbot_init_endpoint: str = f"viewer/api/v1/typebots/{typebot_id}/startChat"
         response = self.client.post(
             typbot_init_endpoint,
             headers={

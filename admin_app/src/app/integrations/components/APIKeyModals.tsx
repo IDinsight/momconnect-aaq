@@ -30,7 +30,7 @@ export const KeyRenewConfirmationModal = ({
   isLoading: boolean;
 }) => (
   <Dialog open={open} onClose={onClose}>
-    <DialogTitle>{"Are you sure you want to renew your API key?"}</DialogTitle>
+    <DialogTitle>{"Are you sure you want to renew the workspace API key?"}</DialogTitle>
     <DialogContent>
       <DialogContentText>
         {`If you proceed, your current key beginning with `}
