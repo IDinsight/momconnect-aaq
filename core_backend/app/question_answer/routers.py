@@ -169,7 +169,7 @@ async def chat(
                     "LLM call returned an error: Please check LLM configuration"
                 )
             },
-
+        )
     finally:
         use_decorators_var.reset(token)
 
@@ -620,84 +620,6 @@ async def get_search_response_llm(
             query_text=query_refined.query_text,
             request=request,
             search_results=search_results,
-        )
-
-    response.search_results = search_results
-
-    return response
-
-
-async def get_search_response(
-    query_refined: QueryRefined,
-    response: QueryResponse,
-    user_id: int,
-    n_similar: int,
-    n_to_crossencoder: int,
-    asession: AsyncSession,
-    request: Request,
-    exclude_archived: bool = True,
-) -> QueryResponse | QueryResponseError:
-    """Get similar content and and return the search results for the user query.
-
-    This function has the same outputs as `get_search_response_llm` but does not
-    have any guardrails and does not generate an LLM response.
-
-    Parameters
-    ----------
-    query_refined
-        The refined query object.
-    response
-        The query response object.
-    user_id
-        The ID of the user making the query.
-    n_similar
-        The number of similar contents to retrieve.
-    n_to_crossencoder
-        The number of similar contents to send to the cross-encoder.
-    asession
-        `AsyncSession` object for database transactions.
-    request
-        The FastAPI request object.
-    exclude_archived
-        Specifies whether to exclude archived content.
-
-    Returns
-    -------
-    QueryResponse | QueryResponseError
-        An appropriate query response object.
-
-    Raises
-    ------
-    ValueError
-        If the cross encoder is being used and `n_to_crossencoder` is greater than
-        `n_similar`.
-    """
-
-    # No checks for errors:
-    #   always do the embeddings search even if some guardrails have failed
-    metadata = create_langfuse_metadata(query_id=response.query_id, user_id=user_id)
-
-    if USE_CROSS_ENCODER == "True" and (n_to_crossencoder < n_similar):
-        raise ValueError(
-            f"`n_to_crossencoder`({n_to_crossencoder}) must be less than or equal to "
-            f"`n_similar`({n_similar})."
-        )
-
-    search_results = await get_similar_content_async(
-        user_id=user_id,
-        question=query_refined.query_text,  # use latest transformed version of the text
-        n_similar=n_to_crossencoder if USE_CROSS_ENCODER == "True" else n_similar,
-        asession=asession,
-        metadata=metadata,
-        exclude_archived=exclude_archived,
-    )
-
-    if USE_CROSS_ENCODER and len(search_results) > 1:
-        search_results = rerank_search_results(
-            n_similar=n_similar,
-            search_results=search_results,
-            query_text=query_refined.query_text,
-            request=request,
         )
 
     response.search_results = search_results
