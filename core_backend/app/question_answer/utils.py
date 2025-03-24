@@ -7,19 +7,19 @@ from .schemas import QuerySearchResult
 
 
 def get_context_string_from_search_results(
-    search_results: dict[int, QuerySearchResult]
+    *, search_results: dict[int, QuerySearchResult]
 ) -> str:
     """Get the context string from the retrieved content.
 
     Parameters
     ----------
     search_results
-        The search results to get the context string from.
+        The search results retrieved from the search engine.
 
     Returns
     -------
     str
-        The context string.
+        The context string from the retrieved content.
     """
 
     context_list = []

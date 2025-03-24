@@ -15,11 +15,10 @@ from core_backend.app.config import (
 )
 from core_backend.app.utils import setup_logger
 
-logger = setup_logger("UDValidation")
+logger = setup_logger(name="UDValidation")
 
 
 class TestUDPerformance:
-
     @pytest.fixture(scope="class", autouse=True)
     async def setup(
         self,
@@ -188,7 +187,6 @@ class TestUDPerformance:
     def _notify_results(
         self, metrics: Dict[str, float | int], notification_topic: str, aws_profile: str
     ) -> None:
-
         ist = tz.gettz("Asia/Kolkata")
         timestamp = datetime.now(tz=ist).strftime("%Y-%m-%d %H:%M:%S IST")
 
@@ -206,7 +204,6 @@ class TestUDPerformance:
         )
 
     def get_results_metadata(self) -> str:
-
         ist = tz.gettz("Asia/Kolkata")
         timestamp = datetime.now(tz=ist).strftime("%Y-%m-%d %H:%M:%S IST")
 
