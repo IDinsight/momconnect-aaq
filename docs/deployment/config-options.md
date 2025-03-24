@@ -66,9 +66,32 @@ You can view all configurations that `core_backend` uses in
 files -- for example, [`core_backend/app/config.py`](https://github.com/IDinsight/ask-a-question/blob/main/core_backend/app/config.py).
 
 ??? Note "Environment variables take precedence over the config file."
-    You'll see in the config files that we get parameters from the environment and if
-    not found, we fall back on defaults provided. So any environment variables set
-    will override any defaults you have set in the config file.
+You'll see in the config files that we get parameters from the environment and if
+not found, we fall back on defaults provided. So any environment variables set
+will override any defaults you have set in the config file.
+
+## Configuring LiteLLM Proxy Server (`litellm_proxy`)
+
+### LiteLLM Proxy Server configurations
+
+You can edit the default [LiteLLM Proxy Server](../components/litellm-proxy/index.md)
+settings by updating
+[`litellm_proxy_config.yaml`](https://github.com/IDinsight/ask-a-question/blob/main/deployment/docker-compose/litellm_proxy_config.yaml).
+Learn more about the server configuration in [LiteLLM Proxy Server](../components/litellm-proxy/index.md).
+
+### Authenticating LiteLLM Proxy Server to LLMs
+
+The `litellm_proxy` server uses the following required and optional (commented out) environment
+variables for authenticating to external LLM APIs ([guide](#template-env-guide) on updating the template).
+
+You will need to set up
+the correct credentials (API keys, etc.) for all LLM APIs declared in
+[`litellm_proxy_config.yaml`](https://github.com/IDinsight/ask-a-question/blob/main/deployment/docker-compose/litellm_proxy_config.yaml). See [LiteLLM's documentation](https://docs.litellm.ai/docs/) for more information about
+authentication for different LLMs.
+
+```shell title="<code>deployment/docker-compose/template.litellm_proxy.env</code>"
+--8<-- "deployment/docker-compose/template.litellm_proxy.env"
+```
 
 ## Configuring optional components
 

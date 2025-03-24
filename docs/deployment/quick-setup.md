@@ -25,9 +25,14 @@ cp template.base.env .base.env
 cp template.core_backend.env .core_backend.env
 ```
 
-**Step 4:** <s>Configure LiteLLM Proxy server</s> (Not applicable for MomConnect)
+**Step 4:** Configure LiteLLM Proxy server
 
-**Step 5:** Run docker-compose
+1. (optional) Edit `litellm_proxy_config.yaml` with LLM services you want to use. See
+   [LiteLLM Proxy Server](../components/litellm-proxy/index.md) for more details.
+2. Update the API key(s) and authentication information in
+   `.litellm_proxy.env`. Make sure you set up the correct authentication for the LLM
+   services defined in `litellm_proxy_config.yaml`.
+   **Step 5:** Run docker-compose
 
 ```shell
 docker compose -f docker-compose.yml -f docker-compose.dev.yml \
