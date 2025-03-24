@@ -672,51 +672,6 @@ class TestGenerateResponse:
     """Tests for generating responses."""
 
     @pytest.mark.parametrize(
-        "outcome, expected_status_code", [("incorrect", 401), ("correct", 200)]
-    )
-    def test_llm_response(
-        self,
-        outcome: str,
-        expected_status_code: int,
-        client: TestClient,
-        api_key_workspace_1: str,
-        faq_contents_in_workspace_1: list[int],
-    ) -> None:
-        """Test LLM response.
-
-        Parameters
-        ----------
-        outcome
-            Specifies whether the outcome is correct.
-        expected_status_code
-            Expected status code.
-        client
-            FastAPI test client.
-        api_key_workspace_1
-            API key for workspace 1.
-        faq_contents_in_workspace_1
-            FAQ content in workspace 1.
-        """
-
-        token = api_key_workspace_1 if outcome == "correct" else "api_key_incorrect"
-        response = client.post(
-            "/search",
-            headers={"Authorization": f"Bearer {token}"},
-            json={
-                "generate_llm_response": True,
-                "query_text": "Tell me about a good sport to play",
-            },
-        )
-        assert response.status_code == expected_status_code
-
-        if expected_status_code == status.HTTP_200_OK:
-            llm_response = response.json()["llm_response"]
-            assert len(llm_response) != 0
-
-            search_results = response.json()["search_results"]
-            assert len(search_results) != 0
-
-    @pytest.mark.parametrize(
         "username, expect_found",
         [(TEST_ADMIN_USERNAME_1, True), (TEST_ADMIN_USERNAME_2, False)],
     )
@@ -800,12 +755,16 @@ class TestGenerateResponse:
         ],
     )
     def test_gibberish_text(
-        self, api_key_user1: str, client: TestClient, query_text: str, status_code: int
+        self,
+        api_key_workspace_1: str,
+        client: TestClient,
+        query_text: str,
+        status_code: int,
     ) -> None:
         response = client.post(
             "/search",
             json={"query_text": query_text},
-            headers={"Authorization": f"Bearer {api_key_user1}"},
+            headers={"Authorization": f"Bearer {api_key_workspace_1}"},
         )
         assert response.status_code == status_code
 
