@@ -2,11 +2,13 @@
 endpoints.
 """
 
+import contextvars
 import json
 import os
 import pickle
 from io import BytesIO
 from pathlib import Path
+from typing import Awaitable, Callable, cast
 
 import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, status
@@ -97,6 +99,7 @@ router = APIRouter(
 )
 
 gibberish_model = pickle.load(open(Path(__file__).parent / "gibberish_model.pkl", "rb"))
+use_decorators_var = contextvars.ContextVar("use_decorators_var", default=False)
 
 
 @router.post(
@@ -140,6 +143,7 @@ async def chat(
     QueryResponse | JSONResponse
         The query response object or an appropriate JSON response.
     """
+    token = use_decorators_var.set(True)
     try:
         # 1.
         user_query = await init_user_query_and_chat_histories(
@@ -166,6 +170,8 @@ async def chat(
                 )
             },
         )
+    finally:
+        use_decorators_var.reset(token)
 
 
 @router.post(
@@ -234,7 +240,12 @@ async def search(
                 detail=f"Gibberish text detected: "
                 f"{user_query_refined_template.query_text}",
             )
-        response = await get_search_response(
+        use_decorators = use_decorators_var.get()
+        get_response_fn = cast(
+            Callable[..., Awaitable[QueryResponse | QueryResponseError]],
+            get_search_response_llm if use_decorators else get_search_response,
+        )
+        response = await get_response_fn(
             asession=asession,
             exclude_archived=True,
             n_similar=int(N_TOP_CONTENT),
@@ -383,7 +394,7 @@ async def voice_search(
         )
         assert isinstance(user_query_db, QueryDB)
 
-        response = await get_search_response(
+        response = await get_search_response_llm(
             asession=asession,
             exclude_archived=True,
             n_similar=int(N_TOP_CONTENT),
@@ -450,11 +461,92 @@ async def voice_search(
         )
 
 
+async def get_search_response(
+    query_refined: QueryRefined,
+    response: QueryResponse,
+    asession: AsyncSession,
+    n_similar: int,
+    n_to_crossencoder: int,
+    request: Request,
+    workspace_id: int,
+    exclude_archived: bool = True,
+) -> QueryResponse | QueryResponseError:
+    """Get similar content and construct the LLM answer for the user query.
+
+    If any guardrails fail, the embeddings search is still done and a
+    `QueryResponseError` object is returned that includes the search results as well as
+    the details of the failure.
+
+    Parameters
+    ----------
+    query_refined
+        The refined query object.
+    response
+        The query response object.
+    asession
+        The SQLAlchemy async session to use for all database connections.
+    n_similar
+        The number of similar contents to retrieve.
+    n_to_crossencoder
+        The number of similar contents to send to the cross-encoder.
+    request
+        The FastAPI request object.
+    workspace_id
+        The ID of the workspace that the contents of the search query belong to.
+    exclude_archived
+        Specifies whether to exclude archived content.
+
+    Returns
+    -------
+    QueryResponse | QueryResponseError
+        An appropriate query response object.
+
+    Raises
+    ------
+    ValueError
+        If the cross encoder is being used and `n_to_crossencoder` is greater than
+        `n_similar`.
+    """
+
+    # No checks for errors: always do the embeddings search even if some guardrails
+    # have failed.
+    metadata = create_langfuse_metadata(
+        query_id=response.query_id, workspace_id=workspace_id
+    )
+
+    if USE_CROSS_ENCODER == "True" and (n_to_crossencoder < n_similar):
+        raise ValueError(
+            f"`n_to_crossencoder`({n_to_crossencoder}) must be less than or equal to "
+            f"`n_similar`({n_similar})."
+        )
+
+    search_results = await get_similar_content_async(
+        asession=asession,
+        exclude_archived=exclude_archived,
+        metadata=metadata,
+        n_similar=n_to_crossencoder if USE_CROSS_ENCODER == "True" else n_similar,
+        question=query_refined.query_text,  # Use latest transformed version of the text
+        workspace_id=workspace_id,
+    )
+
+    if USE_CROSS_ENCODER and len(search_results) > 1:
+        search_results = rerank_search_results(
+            n_similar=n_similar,
+            query_text=query_refined.query_text,
+            request=request,
+            search_results=search_results,
+        )
+
+    response.search_results = search_results
+
+    return response
+
+
 @identify_language__before
 @classify_safety__before
 @translate_question__before
 @paraphrase_question__before
-async def get_search_response(
+async def get_search_response_llm(
     query_refined: QueryRefined,
     response: QueryResponse,
     asession: AsyncSession,
